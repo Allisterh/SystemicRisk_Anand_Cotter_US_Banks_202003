@@ -52,9 +52,13 @@ ind_bank_use <- c(ind_comm_banks, ind_saving_inst,
 
 ind_share_code_common <- c(10, 11) #only common shares included
 
-year_min <- 1994
+year_min <- 1993
 
 ### Filter CRSP data ###
+
+
+# Calculate time needed to filter whole ~9 GB file
+time_pre_filter_CRSP <- Sys.time()
 
 # Filter banks with common shares post 1994 and nominal price > 1
 data_US_banks_daily_2 <- data_US_banks_daily %>% 
@@ -63,8 +67,14 @@ data_US_banks_daily_2 <- data_US_banks_daily %>%
   dplyr::filter(lubridate::year(date) >= year_min) %>% #only banks post '94
   dplyr::filter(prc > 1) #ignore banks with nominal price <= $1
 
-# Remove the (very) heavy original data file
+time_post_filter_CRSP <- Sys.time()
+
+message("Filtered CRSP file. Time taken to filter file = ", 
+        round(time_post_filter_CRSP - time_pre_filter_CRSP, 2), " min")
+
+# Remove from workspace, the (very) heavy original data file
 rm(data_US_banks_daily)
+
 # Select bank names, codes and daily stock returns
 returns_daily_banks_US <- data_US_banks_daily_2 %>%
   dplyr::select(date, comnam, siccd, ret, hsiccd, shrcd, ncusip, cusip)
@@ -98,9 +108,11 @@ nest_quarter_banks_US <- returns_daily_banks_US %>%
   dplyr::group_by(Q_num) %>%
   tidyr::nest()
 
-# Remove duplicated dates
+
 func_rm_date_dupli <- function(df)
 {
+  # This function accepts a dataframe
+  # and returns non-duplicated date rows 
   temp_df <- df %>%
     dplyr::group_by(date, comnam) %>%
     dplyr::distinct(., date, .keep_all = T)
@@ -108,8 +120,10 @@ func_rm_date_dupli <- function(df)
   return(temp_df)
 }
 
+# Remove duplicated dates
 nest_quarter_banks_US <- nest_quarter_banks_US %>%
-  dplyr::mutate('data_no_duplic' = purrr::map(data, func_rm_date_dupli))
+  dplyr::mutate('data_no_duplic' = purrr::map(data, func_rm_date_dupli)) %>%
+  dplyr::select(-data)
 
 func_ret_wide <- function(df)
 {
@@ -123,6 +137,22 @@ func_ret_wide <- function(df)
   return(temp_w)
 }
 
+func_med_NA_df <- function(df)
+{
+  # This function accepts a data frame with missing values and
+  # returns a data frame where missing values are replaced with
+  # column medians
+  func_med_NA_vec <- function(vec)
+  {
+    vec[is.na(vec) | is.infinite(vec) | is.nan(vec)] <- median(vec, na.rm = T)
+    return(vec)
+  }
+  
+  df_2 <- apply(df, 2, func_med_NA_vec)
+  
+  return(df_2)
+}
+
 func_cov <- function(df)
 {
   # This function accepts a dataframe
@@ -134,12 +164,11 @@ func_cov <- function(df)
 }
 
 nest_quarter_banks_US <- nest_quarter_banks_US %>%
-  dplyr::mutate('data_qtr_wide' = purrr::map(data_no_duplic, func_ret_wide),
-                'cov_matrix' = purrr::map(data_qtr_wide, func_cov),
-                'eig_val' = purrr::map(cov_matrix, function(df){return(eigen(df)$values)}),
-                'eig_vec' = purrr::map(cov_matrix, function(df){return(eigen(df)$vectors)}),
-                'share' = purrr::map(eig_val, function(vec){return(cumsum(vec)/sum(vec))}))
-                
-
-
+ dplyr::mutate('data_qtr_wide' = purrr::map(data_no_duplic, func_ret_wide))
+               , 
+               'data_qtr_clean' = purrr::map(data_qtr_wide, func_med_NA_df),
+               'cov_matrix' = purrr::map(data_qtr_wide, func_cov),
+               'eig_val' = purrr::map(cov_matrix, function(df){return(eigen(df)$values)}),
+               'eig_vec' = purrr::map(cov_matrix, function(df){return(eigen(df)$vectors)}),
+               'share' = purrr::map(eig_val, function(vec){return(cumsum(vec)/sum(vec))}))
 
