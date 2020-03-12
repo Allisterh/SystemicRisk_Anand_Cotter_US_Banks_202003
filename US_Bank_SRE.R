@@ -21,7 +21,7 @@ library(moments)
 
 dir_working <- getwd() #address of present directory
 setwd("..") #move control to parent folder (where data file lives)
-file_name_US_banks_daily <- "SIC_6000_6799_20200306.dta" #CRSP daily return file
+file_name_US_banks_daily <- "SIC_6000_6799_202003.dta" #CRSP daily return file
 
 # Calculate time needed to read whole ~9 GB file, not suitable for small RAMs
 time_pre_read_CRSP <- Sys.time()
@@ -127,7 +127,7 @@ nest_quarter_banks_US <- nest_quarter_banks_US %>%
 
 func_ret_wide <- function(df)
 {
-  # This function accepts the full quarterly
+  # This function accepts the long-format full quarterly
   # dataframe and returns date, bank and daily return
   # in wide format
   temp_l <- df %>% dplyr::select(date, comnam, ret)
@@ -137,38 +137,66 @@ func_ret_wide <- function(df)
   return(temp_w)
 }
 
+# How many valid returns to use per quarter?
+min_obs_usable <- 45
+
+func_valid_ret <- function(df, n = min_obs_usable)
+{
+  # This function accepts a return data matrix and 
+  # accepts only those columns which have enough
+  # usable entries ( >= min_obs_usable)
+  temp_NA <- apply(df, 2, function(vec){sum(is.na(vec))})
+  # ignore columns with too many missing values
+  df_2 <- df[, temp_NA < (nrow(df) - n)] 
+  
+  return(df_2)
+}
+
 func_med_NA_df <- function(df)
 {
   # This function accepts a data frame with missing values and
   # returns a data frame where missing values are replaced with
-  # column medians
+  # column medians after ignoring the date column
   func_med_NA_vec <- function(vec)
   {
     vec[is.na(vec) | is.infinite(vec) | is.nan(vec)] <- median(vec, na.rm = T)
     return(vec)
   }
-  
-  df_2 <- apply(df, 2, func_med_NA_vec)
+  # Store date separately
+  temp_date <- df$date
+  # Replace residual missing values with column medians
+  df_2 <- apply(df[, -1], 2, func_med_NA_vec) %>% 
+    tibble::as_tibble()
+  # Reattach the date column
+  df_2 <- df_2 %>%
+    tibble::add_column('date' = temp_date) %>%
+    dplyr::select(date, everything())
   
   return(df_2)
 }
 
-func_cov <- function(df)
+func_cov_rm_date <- function(df)
 {
-  # This function accepts a dataframe
-  # ignores the date column and computes
-  # the covariance matrix of non-missing
-  # data entries
-  df_2 <- na.omit(df[, -1])
-  return(cov(df_2))
+  # This function accepts a dataframe and returns the 
+  # covariance matrix after ignoring the first date column
+  return(cov(df[, -1]))
 }
 
+## Time taken for eigenvector computation
+time_pre_eigen_CRSP <- Sys.time()
+
 nest_quarter_banks_US <- nest_quarter_banks_US %>%
- dplyr::mutate('data_qtr_wide' = purrr::map(data_no_duplic, func_ret_wide))
-               , 
-               'data_qtr_clean' = purrr::map(data_qtr_wide, func_med_NA_df),
-               'cov_matrix' = purrr::map(data_qtr_wide, func_cov),
+ dplyr::mutate('data_qtr_wide' = purrr::map(data_no_duplic, func_ret_wide),
+               'data_qtr_clean_col' = purrr::map(data_qtr_wide, func_valid_ret),
+               'data_qtr_clean' = purrr::map(data_qtr_clean_col, func_med_NA_df),
+               'cov_matrix' = purrr::map(data_qtr_clean, func_cov_rm_date),
                'eig_val' = purrr::map(cov_matrix, function(df){return(eigen(df)$values)}),
                'eig_vec' = purrr::map(cov_matrix, function(df){return(eigen(df)$vectors)}),
-               'share' = purrr::map(eig_val, function(vec){return(cumsum(vec)/sum(vec))}))
+               'share' = purrr::map(eig_val, function(vec){return(cumsum(vec)/sum(vec))})
+               ) %>%
+  dplyr::select(-c(data_no_duplic, data_qtr_wide, data_qtr_clean_col))
 
+time_post_eigen_CRSP <- Sys.time()
+
+message("Eigenvectors computed. Time taken = ", 
+        round(time_post_eigen_CRSP - time_pre_eigen_CRSP, 2), " min")
