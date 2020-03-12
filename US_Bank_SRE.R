@@ -25,9 +25,7 @@ file_name_US_banks_daily <- "SIC_6000_6799_202003.dta" #CRSP daily return file
 
 # Calculate time needed to read whole ~9 GB file, not suitable for small RAMs
 time_pre_read_CRSP <- Sys.time()
-
 data_US_banks_daily <- haven::read_dta(file_name_US_banks_daily)
-
 time_post_read_CRSP <- Sys.time()
 
 message("Read CRSP file. Time taken to read file = ", 
@@ -52,23 +50,21 @@ ind_bank_use <- c(ind_comm_banks, ind_saving_inst,
 
 ind_share_code_common <- c(10, 11) #only common shares included
 
+# start year of sample
 year_min <- 1993
 
 ### Filter CRSP data ###
 
-
 # Calculate time needed to filter whole ~9 GB file
 time_pre_filter_CRSP <- Sys.time()
-
 # Filter banks with common shares post 1994 and nominal price > 1
 data_US_banks_daily_2 <- data_US_banks_daily %>% 
   dplyr::filter(siccd %in% ind_bank_use | hsiccd %in% ind_bank_use) %>% #ignore non-banks
   dplyr::filter(shrcd %in% ind_share_code_common) %>% #include common shares only
-  dplyr::filter(lubridate::year(date) >= year_min) %>% #only banks post '94
+  dplyr::filter(lubridate::year(date) >= year_min) %>% #only banks post '93
   dplyr::filter(prc > 1) #ignore banks with nominal price <= $1
 
 time_post_filter_CRSP <- Sys.time()
-
 message("Filtered CRSP file. Time taken to filter file = ", 
         round(time_post_filter_CRSP - time_pre_filter_CRSP, 2), " min")
 
@@ -100,7 +96,8 @@ returns_daily_banks_US <- returns_daily_banks_US %>%
   dplyr::select(date, Year, Quarter, everything())
 
 returns_daily_banks_US <- returns_daily_banks_US %>%
-  dplyr::mutate('Q_num' = 4*(Year - (year_min - 1) - 1) + Quarter) %>% #this formula generates quarter sequence
+  # the following formula generates quarter sequence
+  dplyr::mutate('Q_num' = 4*(Year - (year_min - 1) - 1) + Quarter) %>% 
   dplyr::select(date, Year, Quarter, Q_num, everything())
 
 # Nest quarterly 
@@ -200,3 +197,16 @@ time_post_eigen_CRSP <- Sys.time()
 
 message("Eigenvectors computed. Time taken = ", 
         round(time_post_eigen_CRSP - time_pre_eigen_CRSP, 2), " min")
+
+func_eig_share <- function(vec_share, m = 3)
+{
+  # This function takes in the share of eigenvector 
+  # contribution and returns the first 
+  
+  temp <- vec_share[1:m]
+  
+  return(temp)
+}
+
+# Share of top eigenvectors
+eig_share_top <- sapply(nest_quarter_banks_US$share, func_eig_share) %>% t()
