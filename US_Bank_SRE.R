@@ -198,7 +198,20 @@ time_post_eigen_CRSP <- Sys.time()
 message("Eigenvectors computed. Time taken = ", 
         round(time_post_eigen_CRSP - time_pre_eigen_CRSP, 2), " min")
 
-func_eig_share <- function(vec_share, m = 3)
+###########################################################################################
+################### Computing out of sample principal components ##########################
+###########################################################################################
+
+nest_quarter_PC <- nest_quarter_banks_US %>%
+  dplyr::select(Q_num, data_qtr_clean, eig_vec, share)
+
+eig_vec_lag_list <- dplyr::lag(nest_quarter_banks_US$eig_vec)
+
+nest_quarter_PC <- nest_quarter_PC %>%
+  tibble::add_column('eig_vec_lag' = eig_vec_lag_list)
+
+
+func_eig_share <- function(vec_share, m = 1)
 {
   # This function takes in the share of eigenvector 
   # contribution and returns the first 
@@ -209,4 +222,85 @@ func_eig_share <- function(vec_share, m = 3)
 }
 
 # Share of top eigenvectors
-eig_share_top <- sapply(nest_quarter_banks_US$share, func_eig_share) %>% t()
+eig_share_top <- purrr::map_dbl(nest_quarter_PC$share, func_eig_share)
+
+# Plot the top eigenvector's share
+# plot(eig_share_top, type = 'l', xlab = 'Quarters', ylab = 'Top eigenvector share')
+# grid()
+
+func_pc_90 <- function(vec_share)
+{
+  # This function accepts a cumulative share of variance
+  # vector and returns the number of PCs needed for 90% coverage 
+  return(min(which(vec_share >= 0.90)))
+}
+
+# How many PCs needed each quarter to explain 90% return variance?
+
+nest_quarter_PC <- nest_quarter_PC %>%
+  dplyr::mutate('num_pc_90' = purrr::map_dbl(share, func_pc_90)) %>%
+  dplyr::select(-share)
+
+
+# temp <- nest_quarter_PC %>%
+#   # ignore any NA entries
+#   dplyr::filter(!(purrr::map_lgl(eig_vec_lag, function(df){return(any(is.na(df)))}))) %>%
+#   dplyr::mutate('eig_df' = purrr::map2(eig_vec_lag, num_PC_90,
+#                                        function(df, num_pc){return(df[, 1:num_pc])})) %>%
+#   dplyr::select(-eig_vec)
+
+func_pc_out_sample <- function(df1, df2, num_pc)
+{
+  # This function accepts 2 dataframes, compares their
+  # columns and rows to see if they can be multiplied,
+  # then finds submatrices compatible with multiplication,
+  # multiplies the two matrice and returns as many first
+  # few column as specified by the third argument
+  # data <- df1[, -1] #drop date column
+  
+  data <- df1 %>% dplyr::select(-date)
+  
+  ncol_data <- ncol(data) #column number in data
+  nrow_eig <- nrow(df2) #row number in eigenmatrix
+  
+  if (ncol_data < nrow_eig) #if num of row is more
+  {
+    eig_mat <- df2[1:ncol_data, ] #select submatrix
+    temp <- as.matrix(data)%*%eig_mat #multiply
+  }
+  else 
+  {
+    data_mat <- data[, 1:nrow_eig] #select submatrix
+    temp <- as.matrix(data_mat)%*%df2 #multiply
+  }
+  
+  pc_out_sample <- temp[, 1:num_pc]
+  
+  return(pc_out_sample)
+}
+
+# i <- 2
+# 
+# df1 <- temp$data_qtr_clean[[i]]
+# df2 <- temp$eig_vec_lag[[i]]
+# num_pc <- temp$num_PC_90[[i]]
+# 
+# if (ncol_data < nrow_eig) #if num of row is more
+# {
+#   eig_mat <- df2[1:ncol_data, ] #select submatrix
+#   temp <- as.matrix(data)%*%eig_mat #multiply
+# } else 
+# {
+#   data_mat <- data[, 1:nrow_eig] #select submatrix
+#   temp <- as.matrix(data_mat)%*%df2 #multiply
+# }
+# 
+# pc_out_sample <- temp[, 1:num_pc]
+
+
+
+nest_quarter_PC <- nest_quarter_PC %>%
+  dplyr::filter(!(purrr::map_lgl(eig_vec_lag, function(df){return(any(is.na(df)))}))) %>%
+  dplyr::mutate('pc_out_sample_90' = purrr::pmap(data_qtr_clean, eig_vec_lag, num_PC_90,
+                                                 func_pc_out_sample))
+
