@@ -249,58 +249,42 @@ nest_quarter_PC <- nest_quarter_PC %>%
 #                                        function(df, num_pc){return(df[, 1:num_pc])})) %>%
 #   dplyr::select(-eig_vec)
 
-func_pc_out_sample <- function(df1, df2, num_pc)
+func_pc_out_sample <- function(df1, df2)
 {
   # This function accepts 2 dataframes, compares their
   # columns and rows to see if they can be multiplied,
   # then finds submatrices compatible with multiplication,
-  # multiplies the two matrice and returns as many first
-  # few column as specified by the third argument
-  # data <- df1[, -1] #drop date column
+  # and multiplies the two matrices
   
-  data <- df1 %>% dplyr::select(-date)
-  
-  ncol_data <- ncol(data) #column number in data
+  data_matrix <- as.matrix(df1)
+  ncol_data <- ncol(data_matrix) #column number in data
   nrow_eig <- nrow(df2) #row number in eigenmatrix
   
   if (ncol_data < nrow_eig) #if num of row is more
   {
     eig_mat <- df2[1:ncol_data, ] #select submatrix
-    temp <- as.matrix(data)%*%eig_mat #multiply
-  }
-  else 
+    temp <- data_matrix%*%eig_mat #multiply
+  } else 
   {
-    data_mat <- data[, 1:nrow_eig] #select submatrix
-    temp <- as.matrix(data_mat)%*%df2 #multiply
+    data_mat <- data_matrix[, 1:nrow_eig] #select submatrix
+    temp <- data_mat%*%df2 #multiply
   }
   
-  pc_out_sample <- temp[, 1:num_pc]
+  pc_out_sample <- temp
   
   return(pc_out_sample)
 }
 
-# i <- 2
-# 
-# df1 <- temp$data_qtr_clean[[i]]
-# df2 <- temp$eig_vec_lag[[i]]
-# num_pc <- temp$num_PC_90[[i]]
-# 
-# if (ncol_data < nrow_eig) #if num of row is more
-# {
-#   eig_mat <- df2[1:ncol_data, ] #select submatrix
-#   temp <- as.matrix(data)%*%eig_mat #multiply
-# } else 
-# {
-#   data_mat <- data[, 1:nrow_eig] #select submatrix
-#   temp <- as.matrix(data_mat)%*%df2 #multiply
-# }
-# 
-# pc_out_sample <- temp[, 1:num_pc]
-
-
 
 nest_quarter_PC <- nest_quarter_PC %>%
-  dplyr::filter(!(purrr::map_lgl(eig_vec_lag, function(df){return(any(is.na(df)))}))) %>%
-  dplyr::mutate('pc_out_sample_90' = purrr::pmap(data_qtr_clean, eig_vec_lag, num_PC_90,
-                                                 func_pc_out_sample))
+  # ignore NA items
+  dplyr::filter(!(purrr::map_lgl(eig_vec_lag, 
+                                 function(df){return(any(is.na(df)))}))) %>%
+  dplyr::mutate('data_qtr_clean_2' = purrr::map(data_qtr_clean, #ignore the first date column
+                                                function(df){return(df[,-1])}),
+                'PC_full' = purrr::map2(data_qtr_clean_2, eig_vec_lag, 
+                                        func_pc_out_sample), #multiply compatible matrices
+                'PC_out_sample_90' = purrr::map2(PC_full, num_pc_90, #pick columns till coverage = 90%
+                                                 function(df, num_pc){return(df[, 1:num_pc])})) %>%
+  dplyr::select(-c(eig_vec, data_qtr_clean))
 
