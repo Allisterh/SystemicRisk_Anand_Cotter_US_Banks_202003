@@ -196,7 +196,7 @@ nest_quarter_banks_US <- nest_quarter_banks_US %>%
 time_post_eigen_CRSP <- Sys.time()
 
 message("Eigenvectors computed. Time taken = ", 
-        round(time_post_eigen_CRSP - time_pre_eigen_CRSP, 2), " min")
+        round(time_post_eigen_CRSP - time_pre_eigen_CRSP, 2), "(sec/min)")
 
 ###########################################################################################
 ################### Computing out of sample principal components ##########################
@@ -241,13 +241,6 @@ nest_quarter_PC <- nest_quarter_PC %>%
   dplyr::mutate('num_pc_90' = purrr::map_dbl(share, func_pc_90)) %>%
   dplyr::select(-share)
 
-
-# temp <- nest_quarter_PC %>%
-#   # ignore any NA entries
-#   dplyr::filter(!(purrr::map_lgl(eig_vec_lag, function(df){return(any(is.na(df)))}))) %>%
-#   dplyr::mutate('eig_df' = purrr::map2(eig_vec_lag, num_PC_90,
-#                                        function(df, num_pc){return(df[, 1:num_pc])})) %>%
-#   dplyr::select(-eig_vec)
 
 func_pc_out_sample <- function(df1, df2)
 {
@@ -314,11 +307,19 @@ func_lm_div <- function(df1, df2)
 
 ### Compute systematic risk exposure (SRE) ###
 
+## Time taken for computing systematic risk exposure ##
+time_pre_SRE_CRSP <- Sys.time()
+
 nest_quarter_pc_regression <- nest_quarter_PC %>%
   dplyr::select(Q_num, data_qtr_clean_2, pc_out_sample_90)
 
 nest_quarter_pc_regression <- nest_quarter_pc_regression %>%
   dplyr::mutate('SRE' = purrr::map2(data_qtr_clean_2, pc_out_sample_90, func_lm_div))
+
+time_post_SRE_CRSP <- Sys.time()
+
+message("Systematic risk exposures computed. Time taken = ", 
+        round(time_post_SRE_CRSP - time_pre_SRE_CRSP, 2), "(sec/min)")
 
 func_attach_name <- function(df_1, vec)
 {
@@ -345,7 +346,13 @@ SRE_US_banks_long <- nest_quarter_pc_regression %>%
 SRE_US_banks_wide <- SRE_US_banks_long %>%
   tidyr::spread(key = Bank, value = SRE_2) 
 
+### Write out as .csv files ###
 
+# Wide format
+# readr::write_csv(SRE_US_banks_wide, 'Syst_Risk_Expos_wide.csv')
+
+# Panel format
+# readr::write_csv(SRE_US_banks_long, 'Syst_Risk_Expos_panel.csv')
 
 
 
