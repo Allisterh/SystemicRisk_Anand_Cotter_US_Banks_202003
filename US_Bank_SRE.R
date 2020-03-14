@@ -275,16 +275,84 @@ func_pc_out_sample <- function(df1, df2)
   return(pc_out_sample)
 }
 
-
+# Compute list column of principal components
 nest_quarter_PC <- nest_quarter_PC %>%
   # ignore NA items
   dplyr::filter(!(purrr::map_lgl(eig_vec_lag, 
                                  function(df){return(any(is.na(df)))}))) %>%
   dplyr::mutate('data_qtr_clean_2' = purrr::map(data_qtr_clean, #ignore the first date column
                                                 function(df){return(df[,-1])}),
-                'PC_full' = purrr::map2(data_qtr_clean_2, eig_vec_lag, 
+                'pc_full' = purrr::map2(data_qtr_clean_2, eig_vec_lag, 
                                         func_pc_out_sample), #multiply compatible matrices
-                'PC_out_sample_90' = purrr::map2(PC_full, num_pc_90, #pick columns till coverage = 90%
+                'pc_out_sample_90' = purrr::map2(pc_full, num_pc_90, #pick columns till coverage = 90%
                                                  function(df, num_pc){return(df[, 1:num_pc])})) %>%
   dplyr::select(-c(eig_vec, data_qtr_clean))
+
+#####################################################################################################
+############################## Principal Component Regressions Begin Here ###########################
+#####################################################################################################
+
+func_lm_div <- function(df1, df2)
+{
+  # This function accepts the LHS and RHS matrices of regressions
+  # and returns the systematic risk exposure of bank = adj_R_sqr
+  lhs <- as.matrix(df1)
+  rhs <- as.matrix(df2)
+  
+  div <- list(NULL)
+  
+  for (j in 1:ncol(lhs)) #for each LHS country
+  {
+    lm_summary <- summary(lm(formula = lhs[, j] ~ rhs))
+    adj_rsq <- max(lm_summary$adj.r.squared, 0)
+    div[[j]] <- 100*(1 - adj_rsq)
+  }
+  
+  return(unlist(div))
+}
+
+
+### Compute systematic risk exposure (SRE) ###
+
+nest_quarter_pc_regression <- nest_quarter_PC %>%
+  dplyr::select(Q_num, data_qtr_clean_2, pc_out_sample_90)
+
+nest_quarter_pc_regression <- nest_quarter_pc_regression %>%
+  dplyr::mutate('SRE' = purrr::map2(data_qtr_clean_2, pc_out_sample_90, func_lm_div))
+
+func_attach_name <- function(df_1, vec)
+{
+  # Accepts regression LHS matrix and unnamed 
+  # systematic risk exposure vector and attaches 
+  # the column names of LHS to the vector of indices
+  names(vec) <- colnames(df_1)
+  return(vec)
+}
+
+# Attach names of banks to systematic risk exposure values
+nest_quarter_pc_regression <- nest_quarter_pc_regression %>%
+  dplyr::mutate('SRE_2' = purrr::map2(data_qtr_clean_2, SRE, func_attach_name))
+
+func_pick_name <- function(vec_name) {return(names(vec_name))} #extract names
+
+# Unnest results in long format
+SRE_US_banks_long <- nest_quarter_pc_regression %>%
+  dplyr::mutate('Bank' = purrr::map(SRE_2, func_pick_name)) %>%
+  dplyr::select(Q_num, Bank, SRE_2) %>%
+  tidyr::unnest(.)
+
+# Spread in wide format
+SRE_US_banks_wide <- SRE_US_banks_long %>%
+  tidyr::spread(key = Bank, value = SRE_2) 
+
+
+
+
+
+
+
+
+
+
+
 
