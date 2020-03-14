@@ -224,10 +224,6 @@ func_eig_share <- function(vec_share, m = 1)
 # Share of top eigenvectors
 eig_share_top <- purrr::map_dbl(nest_quarter_PC$share, func_eig_share)
 
-# Plot the top eigenvector's share
-# plot(eig_share_top, type = 'l', xlab = 'Quarters', ylab = 'Top eigenvector share')
-# grid()
-
 func_pc_90 <- function(vec_share)
 {
   # This function accepts a cumulative share of variance
