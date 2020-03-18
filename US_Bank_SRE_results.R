@@ -57,11 +57,11 @@ SRE_summ_bank_df <- dplyr::bind_rows(SRE_summ_bank_list) %>%
 # boxplot(SRE_summ_df$`SRE_%_Missing`)
 
 # Summary of banks with most numerous observations 
-SRE_summ_bank_most <- SRE_summ_bank_df %>%
-  dplyr::filter(`SRE_%_Missing` < 40) %>%
-  dplyr::arrange(`SRE_%_Missing`)
-
-name_banks_US_most <- dplyr::select(SRE_summ_bank_most, Banks)
+# SRE_summ_bank_most <- SRE_summ_bank_df %>%
+#   dplyr::filter(`SRE_%_Missing` < 40) %>%
+#   dplyr::arrange(`SRE_%_Missing`)
+# 
+# name_banks_US_most <- dplyr::select(SRE_summ_bank_most, Banks)
 
 # Write out as .csv file #
 # readr::write_csv(SRE_summ_bank_most, 'Syst_Risk_Expos_summary_most.csv')
@@ -101,7 +101,7 @@ SRE_summ_quarterly_df <- dplyr::bind_rows(SRE_summ_quarterly_list) %>%
 # Median bank's quarterly behavior
 qtr_grid <- SRE_summ_quarterly_df$Quarters
 x_breaks <- seq(qtr_grid[1], qtr_grid[105], by = 8)
-x_labels <- paste0(seq(1993, 2019, by = 2), "Q4")
+x_labels <- paste0(seq(1993, 2019, by = 2), "Q1")
 
 # All quarters
 plot_trend_median <- ggplot(SRE_summ_quarterly_df,
@@ -121,14 +121,14 @@ plot_trend_median <- ggplot(SRE_summ_quarterly_df,
 
 # Median US bank with most numerous data [core]
 
-SRE_US_quarterly_most_wide <- SRE_US_banks_wide %>%
-  dplyr::select(dplyr::intersect(name_banks_US_most$Banks, names(SRE_US_banks_wide)))
+# SRE_US_quarterly_most_wide <- SRE_US_banks_wide %>%
+#   dplyr::select(dplyr::intersect(name_banks_US_most$Banks, names(SRE_US_banks_wide)))
 
 # Summary for each quarter separately
-SRE_summ_quarterly_most_list <- apply(SRE_US_quarterly_most_wide[, -1], 1, func_summ_vec)
-SRE_summ_quarterly_most_df <- dplyr::bind_rows(SRE_summ_quarterly_most_list) %>%
-  tibble::add_column('Quarters' = nest_quarter_pc_regression$Q_num) %>%
-  dplyr::select(Quarters, everything()) 
+# SRE_summ_quarterly_most_list <- apply(SRE_US_quarterly_most_wide[, -1], 1, func_summ_vec)
+# SRE_summ_quarterly_most_df <- dplyr::bind_rows(SRE_summ_quarterly_most_list) %>%
+#   tibble::add_column('Quarters' = nest_quarter_pc_regression$Q_num) %>%
+#   dplyr::select(Quarters, everything()) 
 
 # 
 # 

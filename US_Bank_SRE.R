@@ -57,11 +57,11 @@ year_min <- 1993
 
 # Calculate time needed to filter whole ~9 GB file
 time_pre_filter_CRSP <- Sys.time()
-# Filter banks with common shares post 1994 and nominal price > 1
+# Filter banks with common shares post year_min and nominal price > 1
 data_US_banks_daily_2 <- data_US_banks_daily %>% 
   dplyr::filter(siccd %in% ind_bank_use | hsiccd %in% ind_bank_use) %>% #ignore non-banks
   dplyr::filter(shrcd %in% ind_share_code_common) %>% #include common shares only
-  dplyr::filter(lubridate::year(date) >= year_min) %>% #only banks post '93
+  dplyr::filter(lubridate::year(date) >= year_min) %>% #only banks post year_min
   dplyr::filter(prc > 1) #ignore banks with nominal price <= $1
 
 time_post_filter_CRSP <- Sys.time()
@@ -79,22 +79,29 @@ returns_daily_banks_US <- data_US_banks_daily_2 %>%
 # rm(data_US_banks_daily_2)
 
 # Label banks according to type
-# returns_daily_banks_US <- returns_daily_banks_US %>%
-#   dplyr::mutate('bank_type' = dplyr::case_when(siccd %in% ind_bank_hold ~ "HC", #holding company
-#                                                siccd %in% ind_comm_banks ~ "CB", #commercial banks
-#                                                siccd %in% ind_credit_union ~ "CU", #credit unions
-#                                                siccd %in% ind_saving_inst ~ "SI")) #savings institutions
+returns_daily_banks_US <- returns_daily_banks_US %>%
+  dplyr::mutate('type_sic' = dplyr::case_when(siccd %in% ind_bank_hold ~ "HC", #holding company
+                                               siccd %in% ind_comm_banks ~ "CB", #commercial banks
+                                               siccd %in% ind_credit_union ~ "CU", #credit unions
+                                               siccd %in% ind_saving_inst ~ "SI"), #savings institutions
+                'type_hsic' = dplyr::case_when(hsiccd %in% ind_bank_hold ~ "HC", #holding company
+                                                   hsiccd %in% ind_comm_banks ~ "CB", #commercial banks
+                                                   hsiccd %in% ind_credit_union ~ "CU", #credit unions
+                                                   hsiccd %in% ind_saving_inst ~ "SI") #savings institutions
+                ) 
 
-# Name of banks in the sample
+# Name of banks in the full sample
 name_banks_US <- returns_daily_banks_US %>% 
   dplyr::select(comnam) %>%
   dplyr::distinct()
 
+# Add year and quarter column
 returns_daily_banks_US <- returns_daily_banks_US %>%
   dplyr::mutate('Year' = lubridate::year(date),
                 'Quarter' = lubridate::quarter(date)) %>%
   dplyr::select(date, Year, Quarter, everything())
 
+# Generate quarter sequence from 1 to 4*year_last
 returns_daily_banks_US <- returns_daily_banks_US %>%
   # the following formula generates quarter sequence
   dplyr::mutate('Q_num' = 4*(Year - (year_min - 1) - 1) + Quarter) %>% 
@@ -281,23 +288,22 @@ nest_quarter_PC <- nest_quarter_PC %>%
 ############################## Principal Component Regressions Begin Here ###########################
 #####################################################################################################
 
-func_lm_div <- function(df1, df2)
+func_lm_SRE <- function(df1, df2)
 {
   # This function accepts the LHS and RHS matrices of regressions
   # and returns the systematic risk exposure of bank = adj_R_sqr
   lhs <- as.matrix(df1)
   rhs <- as.matrix(df2)
   
-  div <- list(NULL)
+  adj_rsq <- list(NULL) #initialize list with NULL
   
   for (j in 1:ncol(lhs)) #for each LHS country
   {
     lm_summary <- summary(lm(formula = lhs[, j] ~ rhs))
-    adj_rsq <- max(lm_summary$adj.r.squared, 0)
-    div[[j]] <- 100*(1 - adj_rsq)
+    adj_rsq[[j]] <- max(lm_summary$adj.r.squared, 0)
   }
   
-  return(unlist(div))
+  return(unlist(adj_rsq))
 }
 
 
@@ -310,7 +316,8 @@ nest_quarter_pc_regression <- nest_quarter_PC %>%
   dplyr::select(Q_num, data_qtr_clean_2, pc_out_sample_90)
 
 nest_quarter_pc_regression <- nest_quarter_pc_regression %>%
-  dplyr::mutate('SRE' = purrr::map2(data_qtr_clean_2, pc_out_sample_90, func_lm_div))
+  dplyr::mutate('SRE' = purrr::map2(data_qtr_clean_2, pc_out_sample_90, 
+                                    func_lm_SRE))
 
 time_post_SRE_CRSP <- Sys.time()
 
