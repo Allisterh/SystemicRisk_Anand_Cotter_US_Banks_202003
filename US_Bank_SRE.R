@@ -142,7 +142,8 @@ func_ret_wide <- function(df)
 }
 
 # How many valid returns to use per quarter?
-min_obs_usable <- 45
+# min_obs_usable <- 45
+min_obs_usable <- 30
 
 func_valid_ret <- function(df, n = min_obs_usable)
 {
