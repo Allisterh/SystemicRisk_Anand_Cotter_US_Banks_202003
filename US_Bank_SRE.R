@@ -19,8 +19,8 @@ library(moments)
 
 ### Read file ### 
 
-dir_working <- getwd() #address of present directory
-setwd("..") #move control to parent folder (where data file lives)
+# dir_working <- getwd() #address of present directory
+# setwd("..") #move control to parent folder (where data file lives)
 file_name_US_banks_daily <- "SIC_6000_6799_202003.dta" #CRSP daily return file
 
 # Calculate time needed to read whole ~9 GB file, not suitable for small RAMs
@@ -31,7 +31,7 @@ time_post_read_CRSP <- Sys.time()
 message("Read CRSP file. Time taken to read file = ", 
         round(time_post_read_CRSP - time_pre_read_CRSP, 2), " min")
 
-setwd(dir_working) #move back control to child directory
+# setwd(dir_working) #move back control to child directory
 
 #############################################
 ### Data Filtration, Cleaning and Tidying ###
