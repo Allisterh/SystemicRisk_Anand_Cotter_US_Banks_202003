@@ -71,9 +71,53 @@ SRE_summ_quarterly_df <- dplyr::bind_rows(SRE_summ_quarterly_list) %>%
   dplyr::select(Quarters, everything()) 
 
 
-################# Median US bank's results ##########################
+###################################################
+#### Explanatory share of top eigenvectors ########
+############ Figure 1 #############################
+###################################################
+
+nest_share <- nest_quarter_banks_US %>%
+  dplyr::select(Q_num, share) %>%
+  dplyr::mutate('top_eig_vec' = purrr::map(share, function(vec){vec[1:10]})) %>%
+  dplyr::mutate('eig_vec_1' = purrr::map_dbl(top_eig_vec, function(vec){vec[1]}))
+
+share_long <- nest_share %>%
+  dplyr::select(Q_num, top_eig_vec) %>%
+  tidyr::unnest(., cols = top_eig_vec)
+
+### Boxplots of top 10 eigenvector explanatory power ###
+
+x_breaks_share <- seq(1, 108, by = 4)
+x_labels_share <- paste0(seq(1993, 2019), "Q1")
+
+
+plot_box_share <- ggplot(data = share_long %>% 
+                           dplyr::filter(Q_num %in% x_breaks_share),
+                         mapping = aes(x = Q_num, y = top_eig_vec, group = Q_num)) +
+  geom_boxplot() +
+  scale_x_continuous(breaks = x_breaks_share,
+                     labels = x_labels_share) +
+  labs(x = "", y = "Explanatory power of top 10 eigenvectors") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+
+
+### Topmost eigenvector's explanatory power share ###
+
+plot_share_eig_vec_1 <- ggplot(data = nest_share, 
+                               mapping = aes(x = Q_num, y = eig_vec_1)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = x_breaks_share,
+                     labels = x_labels_share) +
+  labs(x = "", y = "Explanatory power of the 1st (topmost) eigenvector") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
 
 ###################################################
+######### Trend plot for median bank ##############
 ############ Figure 2 #############################
 ###################################################
 
@@ -90,13 +134,12 @@ plot_trend_median <- ggplot(SRE_summ_quarterly_df,
   geom_smooth(method = "lm", 
               linetype = "dashed", 
               color = "black") +
-  scale_x_continuous(breaks = x_breaks,
-                     labels = x_labels) +
+  scale_x_continuous(breaks = x_breaks_share,
+                     labels = x_labels_share) +
   labs(x = "", y = "Median US bank's systematic risk exposure") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
-
 
 
 ###################################
@@ -117,6 +160,8 @@ plot_box_yearly <- ggplot(data = data_boxplot,
   geom_boxplot(outlier.shape = NA) +
   scale_x_continuous(breaks = x_breaks_y,
                      labels = x_labels_y) +
+  # scale_x_continuous(breaks = x_breaks_share,
+  #                    labels = x_labels_share) +
   labs(x = "", y = "US banks' systematic risk exposure") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
@@ -190,4 +235,100 @@ banks_dsib <- c(bank_ally, bank_amex, bank_truist,
                 bank_us_bancorp, bank_union_bankcal,
                 bank_zion)
 
-bank_systemic <- c(banks_gsib, banks_dsib)
+banks_systemic <- c(banks_gsib, banks_dsib)
+
+SRE_US_systemic <- SRE_US_banks_long %>%
+  dplyr::filter(Bank %in% banks_systemic) %>%
+  dplyr::mutate("Type" = dplyr::case_when(Bank %in% banks_gsib ~ "GSIB",
+                                          Bank %in% banks_dsib ~ "DSIB"))
+
+median_quarter_full <- SRE_US_banks_long %>%
+  dplyr::group_by(Q_num) %>%
+  dplyr::summarise('med_full' = median(SRE_2, na.rm = T))
+median_quarter_systemic <- SRE_US_systemic %>%
+  dplyr::group_by(Q_num) %>%
+  dplyr::summarise('med_sys' = median(SRE_2, na.rm = T))
+median_quarter_GSIB <- SRE_US_systemic %>%
+  dplyr::filter(Type == 'GSIB') %>%
+  dplyr::group_by(Q_num) %>%
+  dplyr::summarise('med_gsib' = median(SRE_2, na.rm = T))
+median_quarter_DSIB <- SRE_US_systemic %>%
+  dplyr::filter(Type == 'DSIB') %>%
+  dplyr::group_by(Q_num) %>%
+  dplyr::summarise('med_dsib' = median(SRE_2, na.rm = T))
+
+median_quarter <- median_quarter_full %>%
+  dplyr::full_join(., median_quarter_systemic, by = 'Q_num') %>%
+  dplyr::full_join(., median_quarter_GSIB, by = 'Q_num') %>%
+  dplyr::full_join(., median_quarter_DSIB, by = 'Q_num') 
+
+median_quarter_long <- median_quarter %>%
+  tidyr::gather(c(med_full, med_sys, med_gsib, med_dsib),
+                key = "Medians", value = "SRE")
+
+##############################################################
+################## Figure 4 ##################################
+##############################################################
+
+df_rect_crises <- data.frame(x_1 = c(60, 70),
+                             x_2 = c(66, 78),
+                             y_1 = c(0, 0),
+                             y_2 = c(1, 1))
+
+data_plot_med_sys <- median_quarter_long %>%
+  dplyr::filter(Medians %in% c('med_full', 'med_sys'))
+
+plot_med_systemic <- ggplot(data_plot_med_sys,
+                            aes(x = Q_num, y = SRE)) +
+  geom_point() +
+  geom_line(mapping = aes(linetype = Medians)) +
+  scale_x_continuous(breaks = x_breaks_share,
+                     labels = x_labels_share) +
+  labs(x = "", y = "Median systemic and median US bank's SRE") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+### With crises shaded in grey ###
+plot_med_systemic_crises <- ggplot() +
+  geom_rect(data = df_rect_crises,
+            mapping = aes(xmin = x_1, 
+                          xmax = x_2, 
+                          ymin = y_1, 
+                          ymax = y_2),
+            color = "grey",
+            alpha = 0.1) +
+  geom_point(data = data_plot_med_sys,
+            mapping = aes(x = Q_num, y = SRE)) +
+  geom_line(data = data_plot_med_sys, 
+            mapping = aes(x = Q_num, y = SRE, linetype = Medians)) +
+  scale_x_continuous(breaks = x_breaks_share,
+                     labels = x_labels_share) +
+  labs(x = "", y = "Median systemic and median US bank's SRE") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+
+#######################################################################
+############## First and second sample halves #########################
+#######################################################################
+
+median_quarter <- median_quarter %>% 
+  dplyr::mutate('Period' = dplyr::case_when(Q_num < max(Q_num)/2 ~ 'H1', 
+                                            Q_num >= max(Q_num)/2 ~ 'H2'))
+
+plot_med_H1H2 <- ggplot(data = median_quarter, 
+                        mapping = aes(x = Q_num, y = med_full)) +
+  geom_point() +
+  geom_line() +
+  geom_smooth(mapping = aes(group = Period),
+              method = 'lm',
+              linetype = 'dotdash',
+              color = 'black') +
+  scale_x_continuous(breaks = x_breaks_share,
+                     labels = x_labels_share) +
+  labs(x = "", y = "Median US bank's SRE") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
