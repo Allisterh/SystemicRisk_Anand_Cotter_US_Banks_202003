@@ -1,0 +1,110 @@
+---
+title: "US Banks' Exposure to Systematic Risk"
+
+
+output:
+  pdf_document:
+    keep_tex: true
+
+fontsize: 12pt
+documentclass: article
+geometry: margin = 1.5in
+
+linkcolor: blue
+urlcolor: red
+citecolor: magenta
+
+
+header-includes:
+   - \linespread{1.25}
+   - \usepackage{amsmath}
+---
+
+```{r setup, eval=T, message=FALSE, warning=T, include=FALSE}
+
+library(tidyverse)
+library(rmarkdown)
+library(knitr)
+library(moments)
+library(lmtest)
+library(sandwich)
+library(plm)
+
+knitr::opts_chunk$set(echo = F, 
+                      warning = F, 
+                      message = F, 
+                      eval = T, 
+                      include = T,
+                      fig.height=6, 
+                      fig.width=9,
+                      fig.align = 'center'
+                      )
+
+```
+
+Recreating the plots and tables of the previous draft
+
+```{r SRE_compute, cache=TRUE}
+
+### Source prior script for computing systematic risk exposures ### 
+name_script_file <- "US_Bank_SRE_results.R"
+source(name_script_file, echo = F) #Compute systematic risk exposure then plot figures and tables
+
+```
+
+Overall, to explain 90% of the variance, we need between `r min(nest_quarter_PC$num_pc_90)` to `r max(nest_quarter_PC$num_pc_90)` eigenvectors. 
+
+
+Share of the top eigenvector and share distribution of the top 10 eigenvectors. 
+
+```{r top_eig}
+
+plot_share_eig_vec_1
+
+plot_box_share
+
+
+```
+
+For the median US bank, its exposure to systematic risk is as follows
+
+```{r median_US_SRE}
+
+plot_trend_median
+
+
+plot_box_yearly
+
+
+plot_med_systemic_crises
+
+
+plot_med_H1H2
+
+```
+
+Table 1 of descriptive statistics recomputed. The rows correspond to the full sample, the systemic banks and the first and second halves of the sample duration.
+
+```{r table_summ_stats}
+
+knitr::kable(print_table_1, digits = 4)
+
+```
+
+Table 2 recomputed from the last draft. The rows correspond to respectively the full sample, the systemic banks, the first and second halves and the median systemic bank in the first and second halves of the sample.
+
+```{r median_trends}
+
+knitr::kable(print_table_2, digits = 4)
+
+
+```
+
+The following is the list of systemic banks' trends
+
+```{r systemic_trend}
+
+knitr::kable(print_trend_systemic_2, digits = 4)
+
+
+```
