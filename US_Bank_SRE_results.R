@@ -160,8 +160,6 @@ plot_box_yearly <- ggplot(data = data_boxplot,
   geom_boxplot(outlier.shape = NA) +
   scale_x_continuous(breaks = x_breaks_y,
                      labels = x_labels_y) +
-  # scale_x_continuous(breaks = x_breaks_share,
-  #                    labels = x_labels_share) +
   labs(x = "", y = "US banks' systematic risk exposure") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
@@ -332,3 +330,329 @@ plot_med_H1H2 <- ggplot(data = median_quarter,
   theme_bw() +
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+
+###################################################################
+##################### TABLE 1 #####################################
+###################################################################
+
+SRE_summ_full <- SRE_US_banks_long %>%
+  dplyr::ungroup() %>%
+  dplyr::select(SRE_2) %>%
+  dplyr::summarise('Min' = min(SRE_2, na.rm = T),
+                   'Max' = max(SRE_2, na.rm = T),
+                   'Mean' = mean(SRE_2, na.rm = T),
+                   'Med' = median(SRE_2, na.rm = T),
+                   'Std_Dev' = sd(SRE_2, na.rm = T),
+                   'IQR' = IQR(SRE_2, na.rm = T),
+                   'Skew' = moments::skewness(SRE_2, na.rm = T),
+                   'Kurt' = moments::kurtosis(SRE_2, na.rm = T))
+
+SRE_summ_sys <- SRE_US_banks_long %>%
+  dplyr::filter(Bank %in% banks_systemic) %>%
+  dplyr::ungroup() %>%
+  dplyr::select(SRE_2) %>%
+  dplyr::summarise('Min' = min(SRE_2, na.rm = T),
+                   'Max' = max(SRE_2, na.rm = T),
+                   'Mean' = mean(SRE_2, na.rm = T),
+                   'Med' = median(SRE_2, na.rm = T),
+                   'Std_Dev' = sd(SRE_2, na.rm = T),
+                   'IQR' = IQR(SRE_2, na.rm = T),
+                   'Skew' = moments::skewness(SRE_2, na.rm = T),
+                   'Kurt' = moments::kurtosis(SRE_2, na.rm = T))
+
+SRE_summ_H1 <- SRE_US_banks_long %>%
+  dplyr::ungroup() %>%
+  dplyr::filter(Q_num < max(Q_num)/2) %>%
+  dplyr::select(SRE_2) %>%
+  dplyr::summarise('Min' = min(SRE_2, na.rm = T),
+                   'Max' = max(SRE_2, na.rm = T),
+                   'Mean' = mean(SRE_2, na.rm = T),
+                   'Med' = median(SRE_2, na.rm = T),
+                   'Std_Dev' = sd(SRE_2, na.rm = T),
+                   'IQR' = IQR(SRE_2, na.rm = T),
+                   'Skew' = moments::skewness(SRE_2, na.rm = T),
+                   'Kurt' = moments::kurtosis(SRE_2, na.rm = T))
+
+SRE_summ_H2 <- SRE_US_banks_long %>%
+  dplyr::ungroup() %>%
+  dplyr::filter(Q_num >= max(Q_num)/2) %>%
+  dplyr::select(SRE_2) %>%
+  dplyr::summarise('Min' = min(SRE_2, na.rm = T),
+                   'Max' = max(SRE_2, na.rm = T),
+                   'Mean' = mean(SRE_2, na.rm = T),
+                   'Med' = median(SRE_2, na.rm = T),
+                   'Std_Dev' = sd(SRE_2, na.rm = T),
+                   'IQR' = IQR(SRE_2, na.rm = T),
+                   'Skew' = moments::skewness(SRE_2, na.rm = T),
+                   'Kurt' = moments::kurtosis(SRE_2, na.rm = T))
+
+##### PRINTING TABLE 1 ##################################
+
+print_table_1 <- dplyr::bind_rows('All' = SRE_summ_full,
+                                'Sys' = SRE_summ_sys,
+                                'H1' = SRE_summ_H1,
+                                'H2' = SRE_summ_H2)
+
+#########################################################
+
+#########################################################
+################## TABLE 2 ##############################
+#########################################################
+
+
+func_trend_NW <- function(df)
+{
+  # This function computes the linear trend and reports
+  # heteroskedasticity and autocorrelation consistent errors
+  # according to Newey West
+  
+  rhs <- df[, 1] #dependent variable
+  lhs <- df[, 2] #independent variable
+  
+  lm_trend <- lm(lhs ~ rhs, data = df)
+  summ_trend <- summary(lm_trend)
+  vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+  summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
+  
+  return(summ_trend)
+}
+
+# Trends all banks
+trend_full <- func_trend_NW(data.frame(median_quarter$Q_num, median_quarter$med_full))
+# Trends systemic banks
+trend_sys <- func_trend_NW(data.frame(median_quarter$Q_num, median_quarter$med_sys))
+
+# Trends first half H1 and second half
+median_quarter_H1 <- median_quarter %>%
+  dplyr::filter(Period == 'H1')
+median_quarter_H2 <- median_quarter %>%
+  dplyr::filter(Period == 'H2')
+
+trend_H1 <- func_trend_NW(data.frame(median_quarter_H1$Q_num, 
+                                     median_quarter_H1$med_full))
+trend_H2 <- func_trend_NW(data.frame(median_quarter_H2$Q_num, 
+                                     median_quarter_H2$med_full))
+
+# Trends systemic banks H1 and H2
+median_quarter_H1_sys <- median_quarter_systemic %>%
+  dplyr::filter(Q_num < max(Q_num)/2)
+median_quarter_H2_sys <- median_quarter_systemic %>%
+  dplyr::filter(Q_num >= max(Q_num)/2) 
+
+trend_H1_sys <- func_trend_NW(data.frame(median_quarter_H1_sys$Q_num, 
+                                     median_quarter_H1$med_sys))
+trend_H2_sys <- func_trend_NW(data.frame(median_quarter_H2_sys$Q_num, 
+                                     median_quarter_H2$med_sys))
+
+func_trend_print <- function(lm_trend)
+{
+  lm_coef <- lm_trend$coefficients
+  lm_coef_year <- lm_coef['rhs', ]
+  
+  return(lm_coef_year)
+}
+
+
+########## PRINTING TABLE 2 ##################################
+
+print_table_2 <- dplyr::bind_rows(func_trend_print(trend_full),
+                                  func_trend_print(trend_sys),
+                                  func_trend_print(trend_H1),
+                                  func_trend_print(trend_H2),
+                                  func_trend_print(trend_H1_sys),
+                                  func_trend_print(trend_H2_sys))
+
+###############################################################
+
+
+#### Computing Newey-West trends for all banks ####
+
+nest_bank_trend <- SRE_US_banks_long %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Bank) %>%
+  tidyr::nest()
+
+func_trend_NW_nested <- function(df)
+{
+  # This function computes the linear trend and reports
+  # heteroskedasticity and autocorrelation consistent errors
+  # according to Newey West
+  
+  rhs <- df$Q_num #dependent variable
+  lhs <- df$SRE_2 #independent variable
+  
+  lm_trend <- lm(lhs ~ rhs, data = df)
+  summ_trend <- summary(lm_trend)
+  vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+  summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
+  
+  return(summ_trend)
+}
+
+nest_bank_trend <- nest_bank_trend %>%
+  dplyr::mutate('obs' = purrr::map_dbl(data, nrow)) %>%
+  dplyr::filter(obs > 10) %>%
+  dplyr::mutate('trend_NW' = purrr::map(data, func_trend_NW_nested)) %>%
+  dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
+
+########## PRINTING TRENDS FOR ALL BANKS ################
+
+print_trend_full <- nest_bank_trend$print_trend
+names(print_trend_full) <- nest_bank_trend$Bank
+
+print_trend_full_2 <- dplyr::bind_rows(print_trend_full) %>% t()
+
+######################################
+########## SYSTEMIC BANKS ############
+######################################
+
+##### DOMESTIC SYSTEMICALLY IMPORTANT BANKS #####
+
+nest_bank_trend_dsib <- nest_bank_trend %>%
+  dplyr::filter(Bank %in% banks_dsib) 
+
+# For banks with different names in the past
+temp_pnc <- nest_bank_trend_dsib %>%
+  dplyr::filter(Bank %in% bank_pnc)
+
+data_pnc <- dplyr::full_join(temp_pnc$data[[1]], 
+                             temp_pnc$data[[2]], 
+                             by = c('Q_num', 'SRE_2'))
+data_pnc_2 <- tibble::tibble('Bank' = rep('PNC', nrow(data_pnc)),
+                             data_pnc)
+
+
+temp_regions <- nest_bank_trend_dsib %>%
+  dplyr::filter(Bank %in% bank_regions)
+
+data_regions <- dplyr::full_join(temp_regions$data[[1]],
+                                 temp_regions$data[[2]],
+                                 by = c('Q_num', 'SRE_2'))
+data_regions_2 <- tibble::tibble('Bank' = rep('REGIONS', nrow(data_regions)),
+                                 data_regions)
+
+
+data_dsib_2 <- dplyr::full_join(data_pnc_2, data_regions_2, 
+                                by = c('Bank', 'Q_num', 'SRE_2'))
+
+nest_dsib_2 <- data_dsib_2 %>%
+  dplyr::group_by(Bank) %>%
+  tidyr::nest()
+
+nest_dsib_2 <- nest_dsib_2 %>%
+  dplyr::mutate('obs' = purrr::map_dbl(data, nrow)) %>%
+  dplyr::mutate('trend_NW' = purrr::map(data, func_trend_NW_nested)) %>%
+  dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
+
+
+nest_dsib_final <- nest_bank_trend_dsib %>%
+  dplyr::filter(!(Bank %in% c(bank_pnc, bank_regions))) %>%
+  dplyr::bind_rows(., nest_dsib_2) %>%
+  dplyr::arrange(Bank)
+
+##### GLOBAL SYSTEMICALLY IMPORTANT BANKS #####
+
+nest_bank_trend_gsib <- nest_bank_trend %>%
+  dplyr::filter(Bank %in% banks_gsib)
+
+# For banks with different names in the past
+
+### JP Morgan
+temp_jpm <- nest_bank_trend_gsib %>%
+  dplyr::filter(Bank %in% bank_jpm)
+
+data_jpm <- dplyr::full_join(temp_jpm$data[[1]], 
+                             temp_jpm$data[[2]], 
+                             by = c('Q_num', 'SRE_2'))
+data_jpm <- dplyr::full_join(data_jpm, temp_jpm$data[[3]],
+                             by = c('Q_num', 'SRE_2'))
+
+data_jpm_2 <- tibble::tibble('Bank' = rep('JPM', nrow(data_jpm)), data_jpm)
+
+
+### CITI
+temp_citi <- nest_bank_trend_gsib %>%
+  dplyr::filter(Bank %in% bank_citi)
+
+data_citi <- dplyr::full_join(temp_citi$data[[1]], 
+                             temp_citi$data[[2]], 
+                             by = c('Q_num', 'SRE_2'))
+
+data_citi_2 <- tibble::tibble('Bank' = rep('CITI', nrow(data_citi)), data_citi)
+
+### BANK OF AMERICA
+temp_bofa <- nest_bank_trend_gsib %>%
+  dplyr::filter(Bank %in% bank_bofa)
+
+data_bofa <- dplyr::full_join(temp_bofa$data[[1]], 
+                             temp_bofa$data[[2]], 
+                             by = c('Q_num', 'SRE_2'))
+
+data_bofa_2 <- tibble::tibble('Bank' = rep('BofA', nrow(data_bofa)), data_bofa)
+
+### BNY MELLON
+temp_bny <- nest_bank_trend_gsib %>%
+  dplyr::filter(Bank %in% bank_bny)
+
+data_bny <- dplyr::full_join(temp_bny$data[[1]], 
+                             temp_bny$data[[2]], 
+                             by = c('Q_num', 'SRE_2'))
+
+data_bny <- dplyr::full_join(data_bny, temp_bny$data[[3]],
+                             by = c('Q_num', 'SRE_2'))
+
+data_bny_2 <- tibble::tibble('Bank' = rep('BNY', nrow(data_bny)), data_bny)
+
+### STATE STREET
+temp_stt <- nest_bank_trend_gsib %>%
+  dplyr::filter(Bank %in% bank_state_street)
+
+data_stt <- dplyr::full_join(temp_stt$data[[1]], 
+                             temp_stt$data[[2]], 
+                             by = c('Q_num', 'SRE_2'))
+
+data_stt_2 <- tibble::tibble('Bank' = rep('STT', nrow(data_stt)), data_stt)
+
+
+### JOINING ALL IN LONG FORMAT
+
+data_gsib_2 <- data_jpm_2 %>%
+  dplyr::full_join(., data_citi_2, by = c('Bank', 'Q_num', 'SRE_2')) %>%
+  dplyr::full_join(., data_bofa_2, by = c('Bank', 'Q_num', 'SRE_2')) %>%
+  dplyr::full_join(., data_bny_2, by = c('Bank', 'Q_num', 'SRE_2')) %>%
+  dplyr::full_join(., data_stt_2, by = c('Bank', 'Q_num', 'SRE_2'))
+
+
+nest_gsib_2 <- data_gsib_2 %>%
+  dplyr::group_by(Bank) %>%
+  tidyr::nest()
+
+nest_gsib_2 <- nest_gsib_2 %>%
+  dplyr::mutate('obs' = purrr::map_dbl(data, nrow)) %>%
+  dplyr::mutate('trend_NW' = purrr::map(data, func_trend_NW_nested)) %>%
+  dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
+
+
+nest_gsib_final <- nest_bank_trend_gsib %>%
+  dplyr::filter(!(Bank %in% c(bank_jpm, bank_citi, bank_bofa, 
+                              bank_bny, bank_state_street))) %>%
+  dplyr::bind_rows(., nest_gsib_2) %>%
+  dplyr::arrange(Bank)
+
+### COMBINING THE DSIBs AND GSIBs
+
+nest_bank_trend_systemic <- nest_gsib_final %>%
+  dplyr::bind_rows(., nest_dsib_final) %>%
+  dplyr::arrange(Bank)
+
+######## PRINTING TRENDS FOR SYSTEMIC BANKS #############
+######## TABLE X ########################################
+
+print_trend_systemic <- nest_bank_trend_systemic$print_trend
+names(print_trend_systemic) <- nest_bank_trend_systemic$Bank
+
+print_trend_systemic_2 <- dplyr::bind_rows(print_trend_systemic) %>% t()
+
+#########################################################
+#########################################################
