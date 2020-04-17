@@ -9,6 +9,7 @@ library(moments)
 library(lmtest)
 library(sandwich)
 library(plm)
+library(poweRlaw)
 
 ### Source prior script for computing systematic risk exposures ### 
 name_script_file <- "US_Bank_SRE.R"
@@ -271,7 +272,7 @@ median_quarter_long <- median_quarter %>%
 df_rect_crises <- data.frame(x_1 = c(60, 70),
                              x_2 = c(66, 78),
                              y_1 = c(0, 0),
-                             y_2 = c(1, 1))
+                             y_2 = c(100, 100))
 
 data_plot_med_sys <- median_quarter_long %>%
   dplyr::filter(Medians %in% c('med_full', 'med_sys'))
@@ -393,6 +394,9 @@ print_table_1 <- dplyr::bind_rows('All' = SRE_summ_full,
                                 'Sys' = SRE_summ_sys,
                                 'H1' = SRE_summ_H1,
                                 'H2' = SRE_summ_H2)
+print_table_1 <- print_table_1 %>%
+  tibble::add_column('Sample' = c('All', 'Sys', 'H1', 'H2')) %>%
+  dplyr::select(Sample, everything())
 
 #########################################################
 
@@ -412,7 +416,8 @@ func_trend_NW <- function(df)
   
   lm_trend <- lm(lhs ~ rhs, data = df)
   summ_trend <- summary(lm_trend)
-  vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+  # vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+  vcov_err <- sandwich::NeweyWest(lm_trend)
   summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
   
   return(summ_trend)
@@ -463,6 +468,11 @@ print_table_2 <- dplyr::bind_rows(func_trend_print(trend_full),
                                   func_trend_print(trend_H1_sys),
                                   func_trend_print(trend_H2_sys))
 
+print_table_2 <- print_table_2 %>%
+  tibble::add_column('Sample' = c('All', 'Sys', 'H1', 'H2',
+                                  'Sys H1', 'Sys H2')) %>%
+  dplyr::select(Sample, everything())
+
 ###############################################################
 
 
@@ -484,7 +494,8 @@ func_trend_NW_nested <- function(df)
   
   lm_trend <- lm(lhs ~ rhs, data = df)
   summ_trend <- summary(lm_trend)
-  vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+  # vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+  vcov_err <- sandwich::NeweyWest(lm_trend)
   summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
   
   return(summ_trend)
@@ -495,6 +506,23 @@ nest_bank_trend <- nest_bank_trend %>%
   dplyr::filter(obs > 10) %>%
   dplyr::mutate('trend_NW' = purrr::map(data, func_trend_NW_nested)) %>%
   dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
+
+### p values for bank trends ###
+
+func_pvalue <- function(vec) {return(vec[4])}
+
+nest_bank_trend <- nest_bank_trend %>%
+  dplyr::mutate('p_value' = purrr::map_dbl(print_trend, func_pvalue)) %>%
+  dplyr::arrange(p_value)
+
+banks_trend_10 <- nest_bank_trend %>%
+  dplyr::filter(p_value <= 0.10)
+banks_trend_5 <- nest_bank_trend %>%
+  dplyr::filter(p_value <= 0.05)
+banks_trend_1 <- nest_bank_trend %>%
+  dplyr::filter(p_value <= 0.01)
+
+
 
 ########## PRINTING TRENDS FOR ALL BANKS ################
 
@@ -655,4 +683,40 @@ names(print_trend_systemic) <- nest_bank_trend_systemic$Bank
 print_trend_systemic_2 <- dplyr::bind_rows(print_trend_systemic) %>% t()
 
 #########################################################
+
+#### Trend during crises: GR and EZ #####################
+
+# Dummy for the great recession
+GR <- rep(0, nrow(median_quarter))
+GR[59:65] <- 1
+
+# Dummy for the eurozone crisis
+EZ <- rep(0, nrow(median_quarter))
+EZ[69:77] <- 1
+
+median_quarter <- median_quarter %>%
+  dplyr::mutate('GR' = GR, 'EZ' = EZ)
+
+formula_full_trend_crises <- med_full ~ Q_num + GR + EZ
+formula_sys_trend_crises <- med_sys ~ Q_num + GR + EZ
+
+func_trend_crises <- function(df, formula = formula_full_trend_crises)
+{
+  lm_trend <- lm(formula = formula, data = df)
+  summ_trend <- summary(lm_trend)
+  vcov_err <- sandwich::NeweyWest(lm_trend)
+  summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
+  
+  return(summ_trend)
+}
+
+
+trend_crises_full <- func_trend_crises(median_quarter)
+trend_crises_sys <- func_trend_crises(median_quarter, formula_sys_trend_crises)
+
+################## TABLE 3 PRINTING #####################
+
+print_crises_full <- trend_crises_full$coefficients
+print_crises_sys <- trend_crises_sys$coefficients
+
 #########################################################

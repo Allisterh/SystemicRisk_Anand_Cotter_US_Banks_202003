@@ -301,7 +301,8 @@ func_lm_SRE <- function(df1, df2)
   for (j in 1:ncol(lhs)) #for each LHS country
   {
     lm_summary <- summary(lm(formula = lhs[, j] ~ rhs))
-    adj_rsq[[j]] <- max(lm_summary$adj.r.squared, 0)
+    # adj_rsq[[j]] <- max(lm_summary$adj.r.squared, 0)
+    adj_rsq[[j]] <- 100*max(lm_summary$adj.r.squared, 0)
   }
   
   return(unlist(adj_rsq))
