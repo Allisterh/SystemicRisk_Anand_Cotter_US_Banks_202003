@@ -720,3 +720,34 @@ print_crises_full <- trend_crises_full$coefficients
 print_crises_sys <- trend_crises_sys$coefficients
 
 #########################################################
+
+########### Checking power law fit ######################
+
+# sre <- SRE_US_banks_long %>%
+#   dplyr::filter(SRE_2 > 0)
+# 
+# sre <- sre$SRE_2
+# 
+# time_pre_read_power <- Sys.time()
+# m_sre <- poweRlaw::conpl$new(sre)
+# # est_sre <- poweRlaw::estimate_xmin(m_sre)
+# temp <- estimate_xmin(m_sre)
+# time_post_read_power <- Sys.time()
+# 
+# message("Fitting power law ", 
+#         round(time_post_read_power - time_pre_read_power, 2), " min")
+# 
+# 
+# 
+# m_sre$setXmin(temp)
+# 
+# ### lognormal
+# 
+# m_sre_ln = conlnorm$new(sre)
+# temp_2 = estimate_xmin(m_sre_ln)
+# m_sre_ln$setXmin(temp_2)
+# 
+# ### Plotting 
+# plot(m_sre)
+# lines(m_sre, col = 2, lwd = 2)
+# lines(m_sre_ln, col = 3, lwd = 2)
