@@ -18,7 +18,7 @@ source(name_script_file, echo = F) #Compute systematic risk exposure using daily
 name_data_file <- 'CStat_Bank.dta'
 data_US_banks_quarterly <- haven::read_dta(name_data_file)
 
-# Old explantory variables
+# Explantory variables
 data_Cstat_expl <- data_US_banks_quarterly %>%
   dplyr::select(gvkey, datacqtr, fyearq, datadate,
                 cusip, conm, conml, atq,
@@ -35,7 +35,7 @@ data_Cstat_expl <- data_US_banks_quarterly %>%
                 dd1q, dibq, ireoq,
                 olbmq, ltmibq)
 
-
+# Renaming for clarity
 data_Cstat_expl_2 <- data_Cstat_expl %>%
   dplyr::rename('total_assets' = atq, 
                 'total_borrowing' = tbq,
@@ -61,14 +61,15 @@ data_Cstat_expl_2 <- data_Cstat_expl %>%
                 'total_non_performing_assets'= npatq,
                 'long_term_debt_due_1_yr' = dd1q)
 
+# Summarizing 
 table_summary_expl <- apply(data_Cstat_expl_2[, -c(1:7, 15:16, 18)], 
                             2, summary) %>% t()
 
-# Based on how many non-missing values there are we select the following
-# variables for panel estimation exercise
+### Based on how many non-missing values there are we select the following ###
+### variables for panel estimation exercise ##################################
 
 data_Cstat_expl_3 <- data_Cstat_expl_2 %>%
-  dplyr::select(gvkey, datadate, cusip, conm,
+  dplyr::select(gvkey, fyearq, datadate, datacqtr, cusip, fic, conm,
                 total_assets, total_deposits, common_equity,
                 total_shareholder_equity, total_borrowing,
                 total_long_term_debt, net_interest_income,
@@ -87,7 +88,7 @@ func_log10 <- function(vec)
 }
 
 
-data_Cstat_panel <- data_Cstat_expl_3 %>%
+data_Cstat_expl_4 <- data_Cstat_expl_3 %>%
   dplyr::mutate('bank_size' = func_log10(total_assets),
                 'deposit_ratio' = 100*(total_deposits/total_assets),
                 'com_eq_ratio' = 100*(common_equity/total_assets),
@@ -102,3 +103,53 @@ data_Cstat_panel <- data_Cstat_expl_3 %>%
                 'npa_ratio' = 100*(total_non_performing_assets/total_assets),
                 'net_int_margin' = net_interest_margin,
                 't1_t2_ratio' = T1_T2_comb_ratio)
+
+data_Cstat_panel <- data_Cstat_expl_4 %>%
+  dplyr::select(gvkey:conm, bank_size:t1_t2_ratio)
+
+#### 8-digit cusip column for matching ####
+
+data_Cstat_panel <- data_Cstat_panel %>%
+  dplyr::mutate('cusip_8' = substr(cusip, 1, 8)) %>%
+  dplyr::select(conm, datacqtr, cusip_8, 
+                everything()) %>%
+#  dplyr::rename('Bank' = conm) %>%
+  dplyr::select(-c(gvkey, datadate, cusip))
+
+bank_cusip_file <- returns_daily_banks_US %>%
+  dplyr::select(comnam, ncusip, cusip) %>%
+  dplyr::distinct() %>%
+  dplyr::rename('Bank' = comnam, 'cusip_8' = cusip)
+
+### Attaching cusip code to bank SRE calculation ###
+
+SRE_US_banks_long_2 <- SRE_US_banks_long %>%
+  dplyr::left_join(., bank_cusip_file, by = 'Bank') %>%
+  dplyr::arrange(Bank)
+
+## Attaching year-quarter to SRE long data ##
+
+year_min <- min(returns_daily_banks_US$Year)
+year_max <- max(returns_daily_banks_US$Year)
+
+year_quarter <- paste0(rep(1993:2019, each = 4),
+                       rep(c('Q1', 'Q2', 'Q3', 'Q4'), 
+                           (year_max-year_min+1)))
+quarter_numbers <- 1:108
+
+tibble_year_quarter <- tibble::tibble('Q_num' = quarter_numbers,
+                                      'datacqtr' = year_quarter)
+
+data_Cstat_panel_2 <- data_Cstat_panel %>%
+  dplyr::left_join(., tibble_year_quarter, by = 'datacqtr') %>%
+  dplyr::select(conm, datacqtr, Q_num, fyearq, cusip_8, everything())  
+
+
+#### Arranging the final panel data form ####
+
+panel_data_full <- SRE_US_banks_long_2 %>%
+  dplyr::left_join(., data_Cstat_panel_2, by = c('Q_num', 'cusip_8')) %>%
+  dplyr::select(cusip_8, Q_num, datacqtr, ncusip, 
+                Bank, conm, fyearq, fic, everything())
+
+
