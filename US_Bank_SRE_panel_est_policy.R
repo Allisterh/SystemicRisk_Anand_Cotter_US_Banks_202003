@@ -12,7 +12,7 @@ library(plm)
 library(poweRlaw)
 
 ### Source prior script for computing systematic risk exposures ### 
-name_script_file <- "US_Bank_SRE.R"
+name_script_file <- "US_Bank_SRE_results.R"
 source(name_script_file, echo = F) #Compute systematic risk exposure using daily price
 
 name_data_file <- 'CStat_Bank.dta'
@@ -199,7 +199,7 @@ panel_SRE_full_2 <- panel_SRE_full %>%
 ### Main model specification ###
 formula_main <- SRE_2 ~ bank_size + debt_ratio + deposit_ratio + 
   net_int_margin + npa_ratio + t1_t2_ratio + non_int_income_ratio +
-  debt_ratio_current
+  debt_ratio_current + cash_div_ratio
 
 func_panel_est <- function(formula = formula_main, 
                            panel_data = panel_SRE_full_2, 
@@ -234,17 +234,75 @@ func_panel_est <- function(formula = formula_main,
 ### Panel estimation results ###
 ################################
 
-
-### Main benchmark model
-panel_est_main_model <- func_panel_est(formula = formula_main,
+## All banks full time
+panel_est_main_model_full <- func_panel_est(formula = formula_main,
                                        panel_data = panel_SRE_full_2,
                                        fixed_effect = 'twoways')
 
-### Alternative model
+## All banks pre 2006
+panel_est_main_model_H1 <- func_panel_est(formula = formula_main,
+                                          panel_data = panel_SRE_full_2 %>%
+                                            dplyr::filter(Q_num < max(Q_num)/2),
+                                          fixed_effect = 'twoways')
 
-# formula_alt <- SRE_2 ~ bank_size + debt_ratio + deposit_ratio + 
-#   profit_ratio_non_int + profit_ratio_cash_div + npa_ratio + t1_t2_ratio
-# 
-# panel_est_alt_model <- func_panel_est(formula = formula_alt,
-#                                        panel_data = panel_SRE_full_2,
-#                                        fixed_effect = 'twoways')
+## All banks post 2006
+panel_est_main_model_H2 <- func_panel_est(formula = formula_main,
+                                       panel_data = panel_SRE_full_2 %>%
+                                         dplyr::filter(Q_num >= max(Q_num)/2),
+                                       fixed_effect = 'twoways')
+
+### Subsample: Systemic banks ###
+
+# Systemic banks' cusips
+bank_cusip_sys <- bank_cusip_file %>%
+  dplyr::filter(Bank %in% banks_systemic) %>%
+  dplyr::select(Bank, cusip_8)
+
+cusip_8_sys <- bank_cusip_sys$cusip_8
+
+## Systemic banks full time
+panel_est_main_model_sys <- func_panel_est(formula = formula_main,
+                                       panel_data = panel_SRE_full_2 %>%
+                                         dplyr::filter(cusip_8 %in% cusip_8_sys),
+                                       fixed_effect = 'twoways')
+
+## Systemic banks pre 2006
+panel_est_main_model_sys_H1 <- func_panel_est(formula = formula_main,
+                                           panel_data = panel_SRE_full_2 %>%
+                                             dplyr::filter(cusip_8 %in% cusip_8_sys &
+                                                             Q_num < max(Q_num)/2),
+                                           fixed_effect = 'twoways')
+
+## Systemic banks post 2006
+panel_est_main_model_sys_H2 <- func_panel_est(formula = formula_main,
+                                              panel_data = panel_SRE_full_2 %>%
+                                                dplyr::filter(cusip_8 %in% cusip_8_sys &
+                                                                Q_num >= max(Q_num)/2),
+                                              fixed_effect = 'twoways')
+
+### Subsample: Large banks (>$1B in 2019Q1) ###
+
+cusip_large_2019 <- panel_SRE_full_2 %>%
+  dplyr::filter(Q_num == 105) %>%
+  dplyr::filter(bank_size >= 3) %>%
+  dplyr::select(cusip_8, Bank, conm)
+
+panel_SRE_large_2019 <- panel_SRE_full_2 %>%
+  dplyr::filter(cusip_8 %in% cusip_large_2019$cusip_8)
+
+# Large banks full time
+panel_est_main_model_large <- func_panel_est(formula = formula_main,
+                                             panel_data = panel_SRE_large_2019,
+                                             fixed_effect = 'twoways')
+
+# Large banks pre 2006
+panel_est_main_model_large_H1 <- func_panel_est(formula = formula_main,
+                                             panel_data = panel_SRE_large_2019 %>%
+                                               dplyr::filter(Q_num < max(Q_num)/2),
+                                             fixed_effect = 'twoways')
+
+# Large banks post 2006
+panel_est_main_model_large_H2 <- func_panel_est(formula = formula_main,
+                                                panel_data = panel_SRE_large_2019 %>%
+                                                  dplyr::filter(Q_num >= max(Q_num)/2),
+                                                fixed_effect = 'twoways')

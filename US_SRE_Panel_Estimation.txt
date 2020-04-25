@@ -1,0 +1,240 @@
+################### US BANKS' SRE UPDATED PANEL ESTIMATE RESULTS ########################
+
+### BANK AND QUARTER FIXED EFFECTS ###
+### STANDARD ERRORS DOUBLE CLUSTERED AT BANK AND QUARTER LEVEL ###
+
+#########################################################################################
+
+## All banks full time
+
+
+Twoways effects Within Model
+
+Call:
+plm::plm(formula = formula, data = panel_data, effect = fixed_effect, 
+    model = "within", type = "HC0")
+
+Unbalanced Panel: n = 1345, T = 1-104, N = 34153
+
+Residuals:
+     Min.   1st Qu.    Median   3rd Qu.      Max. 
+-66.54028 -14.94295   0.34953  13.91604  85.60150 
+
+Coefficients:
+                        Estimate  Std. Error  t value  Pr(>|t|)    
+bank_size             1.8910e+01  1.8878e+00  10.0171 < 2.2e-16 ***
+debt_ratio           -4.1674e-01  9.6529e-02  -4.3172 1.585e-05 ***
+deposit_ratio        -4.1338e-01  9.9877e-02  -4.1389 3.499e-05 ***
+net_int_margin       -2.9012e-05  7.1079e-07 -40.8161 < 2.2e-16 ***
+npa_ratio             6.1613e-02  1.8047e-01   0.3414    0.7328    
+t1_t2_ratio           1.6835e-03  1.1012e-03   1.5287    0.1263    
+non_int_income_ratio  5.1380e-02  7.0002e-01   0.0734    0.9415    
+debt_ratio_current   -2.6533e-02  4.1702e-02  -0.6362    0.5246    
+cash_div_ratio        2.5854e-02  2.5232e-01   0.1025    0.9184    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Total Sum of Squares:    13688000
+Residual Sum of Squares: 13487000
+R-Squared:      0.01473
+Adj. R-Squared: -0.02924
+F-statistic: 54.3067 on 9 and 32693 DF, p-value: < 2.22e-16
+
+#######################################################################
+
+
+## All banks pre 2006
+
+
+Twoways effects Within Model
+
+Call:
+plm::plm(formula = formula, data = panel_data, effect = fixed_effect, 
+    model = "within", type = "HC0")
+
+Unbalanced Panel: n = 1212, T = 1-50, N = 16368
+
+Residuals:
+     Min.   1st Qu.    Median   3rd Qu.      Max. 
+-57.74812 -16.32094  -0.71543  14.96127  72.56011 
+
+Coefficients:
+                        Estimate  Std. Error  t value  Pr(>|t|)    
+bank_size             7.1917e+00  2.7816e+00   2.5854  0.009735 ** 
+debt_ratio           -3.1749e-01  1.2964e-01  -2.4491  0.014334 *  
+deposit_ratio        -3.0498e-01  1.3470e-01  -2.2642  0.023576 *  
+net_int_margin       -2.8718e-05  6.3016e-07 -45.5727 < 2.2e-16 ***
+npa_ratio             5.4913e-01  3.4584e-01   1.5878  0.112346    
+t1_t2_ratio          -1.8922e-04          NA       NA        NA    
+non_int_income_ratio -5.9976e-01  8.7613e-01  -0.6846  0.493634    
+debt_ratio_current    3.9691e-02  4.8335e-02   0.8212  0.411566    
+cash_div_ratio       -3.9530e-01  3.1102e-01  -1.2710  0.203758    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Total Sum of Squares:    6665000
+Residual Sum of Squares: 6650600
+R-Squared:      0.0021664
+Adj. R-Squared: -0.081846
+F-statistic: 3.64162 on 9 and 15096 DF, p-value: 0.00014781
+
+#####################################################################
+
+
+## All banks post 2006
+
+
+Twoways effects Within Model
+
+Call:
+plm::plm(formula = formula, data = panel_data, effect = fixed_effect, 
+    model = "within", type = "HC0")
+
+Unbalanced Panel: n = 630, T = 1-55, N = 17785
+
+Residuals:
+     Min.   1st Qu.    Median   3rd Qu.      Max. 
+-67.89729 -12.90019   0.67665  11.94250  73.26864 
+
+Coefficients:
+                        Estimate  Std. Error t value  Pr(>|t|)    
+bank_size             1.9814e+01  2.9499e+00  6.7166 1.919e-11 ***
+debt_ratio            1.4283e-02  1.3283e-01  0.1075   0.91437    
+deposit_ratio         2.3684e-02  1.3327e-01  0.1777   0.85894    
+net_int_margin        3.0544e-02  2.3561e-02  1.2964   0.19487    
+npa_ratio             1.8217e-01  2.1190e-01  0.8597   0.38997    
+t1_t2_ratio           3.0942e-03  3.6094e-05 85.7250 < 2.2e-16 ***
+non_int_income_ratio -1.2771e-01  9.5938e-01 -0.1331   0.89411    
+debt_ratio_current    4.0499e-02  5.4666e-02  0.7409   0.45879    
+cash_div_ratio        9.1136e+00  3.8873e+00  2.3444   0.01907 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Total Sum of Squares:    6167500
+Residual Sum of Squares: 6094900
+R-Squared:      0.011761
+Adj. R-Squared: -0.02825
+F-statistic: 22.601 on 9 and 17092 DF, p-value: < 2.22e-16
+
+
+####################################################################
+
+
+### Subsample: Large banks (>$1B in 2019Q1) ###
+
+
+# Large banks full time
+
+
+Twoways effects Within Model
+
+Call:
+plm::plm(formula = formula, data = panel_data, effect = fixed_effect, 
+    model = "within", type = "HC0")
+
+Unbalanced Panel: n = 234, T = 5-104, N = 15046
+
+Residuals:
+    Min.  1st Qu.   Median  3rd Qu.     Max. 
+-67.5266 -12.2034   1.5668  12.6364  88.0312 
+
+Coefficients:
+                        Estimate  Std. Error t value  Pr(>|t|)    
+bank_size            16.38359130  2.59853998  6.3049 2.966e-10 ***
+debt_ratio           -0.56233850  0.16937470 -3.3201 0.0009021 ***
+deposit_ratio        -0.61208181  0.17198356 -3.5590 0.0003735 ***
+net_int_margin        0.00503236  0.00011874 42.3828 < 2.2e-16 ***
+npa_ratio            -0.82236444  0.39901961 -2.0610 0.0393242 *  
+t1_t2_ratio          -0.33151907  0.13227867 -2.5062 0.0122138 *  
+non_int_income_ratio  0.71328608  1.29423270  0.5511 0.5815553    
+debt_ratio_current   -0.01543507  0.07356134 -0.2098 0.8338065    
+cash_div_ratio        4.95855037  3.70399377  1.3387 0.1806878    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Total Sum of Squares:    5361900
+Residual Sum of Squares: 5240900
+R-Squared:      0.022556
+Adj. R-Squared: -0.00058782
+F-statistic: 37.6846 on 9 and 14697 DF, p-value: < 2.22e-16
+
+
+###################################################################
+
+
+# Large banks pre 2006
+
+
+Twoways effects Within Model
+
+Call:
+plm::plm(formula = formula, data = panel_data, effect = fixed_effect, 
+    model = "within", type = "HC0")
+
+Unbalanced Panel: n = 186, T = 1-50, N = 4215
+
+Residuals:
+      Min.    1st Qu.     Median    3rd Qu.       Max. 
+-59.269432 -15.535868   0.050801  15.209315  75.535408 
+
+Coefficients:
+                        Estimate  Std. Error t value Pr(>|t|)    
+bank_size             4.59136871  5.43425174  0.8449  0.39822    
+debt_ratio            0.41489624  0.24576999  1.6881  0.09146 .  
+deposit_ratio         0.20364036  0.24762783  0.8224  0.41092    
+net_int_margin        0.00484954  0.00017077 28.3988  < 2e-16 ***
+npa_ratio            -0.28724800  1.38393374 -0.2076  0.83558    
+t1_t2_ratio           0.03137889  0.18753615  0.1673  0.86713    
+non_int_income_ratio -0.91614054  2.33975950 -0.3916  0.69541    
+debt_ratio_current   -0.11353130  0.10871502 -1.0443  0.29641    
+cash_div_ratio       -5.10153282  6.25705816 -0.8153  0.41494    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Total Sum of Squares:    1723800
+Residual Sum of Squares: 1716800
+R-Squared:      0.0040404
+Adj. R-Squared: -0.057439
+F-statistic: 1.78906 on 9 and 3969 DF, p-value: 0.065165
+
+
+##################################################################
+
+
+# Large banks post 2006
+
+
+Twoways effects Within Model
+
+Call:
+plm::plm(formula = formula, data = panel_data, effect = fixed_effect, 
+    model = "within", type = "HC0")
+
+Unbalanced Panel: n = 234, T = 1-55, N = 10831
+
+Residuals:
+    Min.  1st Qu.   Median  3rd Qu.     Max. 
+-63.9396 -10.5394   1.3285  11.1147  71.5707 
+
+Coefficients:
+                       Estimate Std. Error t value  Pr(>|t|)    
+bank_size            19.7406360  2.9997275  6.5808 4.901e-11 ***
+debt_ratio           -0.2771425  0.1978663 -1.4007    0.1613    
+deposit_ratio        -0.2360675  0.2069648 -1.1406    0.2541    
+net_int_margin       -0.1613532  0.4938256 -0.3267    0.7439    
+npa_ratio            -0.5573925  0.4075599 -1.3676    0.1715    
+t1_t2_ratio          -0.1230586  0.1777927 -0.6921    0.4889    
+non_int_income_ratio -0.0052236  1.2703635 -0.0041    0.9967    
+debt_ratio_current    0.0599824  0.0692730  0.8659    0.3866    
+cash_div_ratio        6.3989667  3.9963107  1.6012    0.1094    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Total Sum of Squares:    3224300
+Residual Sum of Squares: 3171700
+R-Squared:      0.016327
+Adj. R-Squared: -0.011313
+F-statistic: 19.4273 on 9 and 10534 DF, p-value: < 2.22e-16
+
+
+################################################################
