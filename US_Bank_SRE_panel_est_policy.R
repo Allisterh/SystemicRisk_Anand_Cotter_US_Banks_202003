@@ -98,8 +98,8 @@ data_Cstat_expl_4 <- data_Cstat_expl_3 %>%
                 'profit_ratio_net_int' = 100*(net_interest_income/total_assets),
                 'debt_ratio_current' = 100*(debt_in_curr_liab/total_assets),
                 'com_stock_ratio' = 100*(common_stock/total_assets),
-                'profit_ratio_non_int' = 100*(total_noninterest_income/total_assets),
-                'profit_ratio_cash_div' = 100*(cash_div_common_stock/total_assets),
+                'non_int_income_ratio' = 100*(total_noninterest_income/total_assets),
+                'cash_div_ratio' = 100*(cash_div_common_stock/total_assets),
                 'npa_ratio' = 100*(total_non_performing_assets/total_assets),
                 'net_int_margin' = net_interest_margin,
                 't1_t2_ratio' = T1_T2_comb_ratio)
@@ -113,9 +113,9 @@ data_Cstat_panel <- data_Cstat_panel %>%
   dplyr::mutate('cusip_8' = substr(cusip, 1, 8)) %>%
   dplyr::select(conm, datacqtr, cusip_8, 
                 everything()) %>%
-#  dplyr::rename('Bank' = conm) %>%
   dplyr::select(-c(gvkey, datadate, cusip))
 
+### Matching bank name to 8-digit cusip ###
 bank_cusip_file <- returns_daily_banks_US %>%
   dplyr::select(comnam, ncusip, cusip) %>%
   dplyr::distinct() %>%
@@ -126,6 +126,10 @@ bank_cusip_file <- returns_daily_banks_US %>%
 SRE_US_banks_long_2 <- SRE_US_banks_long %>%
   dplyr::left_join(., bank_cusip_file, by = 'Bank') %>%
   dplyr::arrange(Bank)
+
+# Remove duplicate cusip-Q_num entries
+SRE_US_banks_long_3 <- SRE_US_banks_long_2 %>%
+  dplyr::distinct(cusip_8, Q_num, .keep_all = T)
 
 ## Attaching year-quarter to SRE long data ##
 
@@ -144,12 +148,103 @@ data_Cstat_panel_2 <- data_Cstat_panel %>%
   dplyr::left_join(., tibble_year_quarter, by = 'datacqtr') %>%
   dplyr::select(conm, datacqtr, Q_num, fyearq, cusip_8, everything())  
 
+# Remove duplicate cusip-Q_num entries
+data_Cstat_panel_3 <- data_Cstat_panel_2 %>%
+  dplyr::distinct(cusip_8, Q_num, .keep_all = T)
+
+func_cusip_check <- function(cusip_8)
+{
+  # This function accepts an 8 digit cusip
+  # and returns 1 if the last two digits
+  # indicate common stocks (10 or 11) else
+  # returns 0
+  last_2_char <- substr(cusip_8, 7, 8)
+  if (last_2_char == '10' |
+      last_2_char == '11')
+  {
+    return(1)
+  } else
+  {
+    return(0)
+  }
+}
+
 
 #### Arranging the final panel data form ####
 
-panel_data_full <- SRE_US_banks_long_2 %>%
-  dplyr::left_join(., data_Cstat_panel_2, by = c('Q_num', 'cusip_8')) %>%
+panel_SRE_full_left <- SRE_US_banks_long_3 %>%
+  dplyr::left_join(., data_Cstat_panel_3, by = c('Q_num', 'cusip_8')) %>%
   dplyr::select(cusip_8, Q_num, datacqtr, ncusip, 
-                Bank, conm, fyearq, fic, everything())
+                Bank, conm, fyearq, fic, everything()) %>%
+  dplyr::mutate('cusip_status' = purrr::map_dbl(cusip_8, func_cusip_check))
 
 
+cor_panel_variables <- cor(data.matrix(panel_SRE_full_left[, -c(1:8)]), 
+                           use = 'complete.obs')
+
+#############################################################################
+################# Panel estimations begin here ##############################
+#############################################################################
+
+panel_SRE_full <- panel_SRE_full_left %>%
+  dplyr::select(-c(ncusip, fyearq, fic)) %>%
+  dplyr::select(cusip_8, Q_num, cusip_status, 
+                datacqtr, Bank, conm, everything()) %>%
+  dplyr::filter(cusip_status == 1) %>%
+  dplyr::ungroup() 
+
+panel_SRE_full_2 <- panel_SRE_full %>%
+  dplyr::distinct(cusip_8, Q_num, .keep_all = T)
+
+### Main model specification ###
+formula_main <- SRE_2 ~ bank_size + debt_ratio + deposit_ratio + 
+  net_int_margin + npa_ratio + t1_t2_ratio + non_int_income_ratio +
+  debt_ratio_current
+
+func_panel_est <- function(formula = formula_main, 
+                           panel_data = panel_SRE_full_2, 
+                           fixed_effect = 'twoways')
+{
+  # This function accepts a formula, panel data matrix and model spec
+  # and returns the summary of an unbalanced, fixed-effects panel regression
+  # with clustered robust standard errors with clustering at both 
+  # Country and Year levels
+  
+  # Panel estimation with fixed effects
+  plm_fixed <- plm::plm(formula, 
+                        data = panel_data, 
+                        model = "within",
+                        type = "HC0", 
+                        effect = fixed_effect)
+  
+  # Robust, clustered standard errors
+  vcov_err <- plm::vcovDC(plm_fixed) #Double clustering
+  
+  plm_fixed_robust <- lmtest::coeftest(plm_fixed, vcov. = vcov_err)
+  
+  plm_out <- summary(plm_fixed)
+  
+  # Include robust clustered errors
+  plm_out$coefficients <- unclass(plm_fixed_robust) 
+  
+  return(plm_out)
+}
+
+################################
+### Panel estimation results ###
+################################
+
+
+### Main benchmark model
+panel_est_main_model <- func_panel_est(formula = formula_main,
+                                       panel_data = panel_SRE_full_2,
+                                       fixed_effect = 'twoways')
+
+### Alternative model
+
+# formula_alt <- SRE_2 ~ bank_size + debt_ratio + deposit_ratio + 
+#   profit_ratio_non_int + profit_ratio_cash_div + npa_ratio + t1_t2_ratio
+# 
+# panel_est_alt_model <- func_panel_est(formula = formula_alt,
+#                                        panel_data = panel_SRE_full_2,
+#                                        fixed_effect = 'twoways')
