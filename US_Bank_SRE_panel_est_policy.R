@@ -361,6 +361,9 @@ nest_SRE_sys <- nest_SRE_sys %>%
                                                   function(tib){return(median(tib$com_eq_ratio, 
                                                                               na.rm = T))}))
 
+##################################################################
+###################### Figures 6 and 7 ###########################
+##################################################################
 
 ### Plotting the median systemic bank's ratios (Fig 6+7) ###
 x_breaks_sys <- seq(1, 108, by = 4)
@@ -454,7 +457,7 @@ mean_test_SRE_ks <- ks.test(SRE_sys_Dodd_Frank_pre$SRE_2,
                                alternative = "greater")
 
 ############################################################################
-############ Mean and variance tests during crises #########################
+######################### Mean tests during crises #########################
 ############################################################################
 
 ####### SRE ########

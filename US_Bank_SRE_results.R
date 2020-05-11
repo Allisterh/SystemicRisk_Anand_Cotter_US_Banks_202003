@@ -117,6 +117,30 @@ plot_share_eig_vec_1 <- ggplot(data = nest_share,
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
 
+### Figure 1 ###
+
+top_eig_mat <- sapply(nest_share$top_eig_vec, rbind) %>% t() 
+colnames(top_eig_mat) <- paste0('Eig_', seq(1:ncol(top_eig_tib)))
+top_eig_tib <- top_eig_tib %>%
+  tibble::as_tibble() %>%
+  tibble::add_column('Q_num' = seq(1, nrow(top_eig_tib))) %>%
+  dplyr::select(Q_num, everything())
+
+top_eig_long <- top_eig_tib %>%
+  tidyr::gather(Eig_1:Eig_10, key = 'Eig_vec', value = 'Proportion')
+
+plot_top_eig <- ggplot(data = top_eig_long, 
+                       mapping = aes(x = Q_num, y = Proportion)) +
+  geom_line(mapping = aes(linetype = Eig_vec)) +
+  scale_x_continuous(breaks = x_breaks_share,
+                     labels = x_labels_share) +
+  labs(x = "", y = "Cumulative explanatory power of top eigenvectors") +
+  theme_bw() +
+  theme(text = element_text(size = 20)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
+  theme(legend.position = "none")
+  
+
 ###################################################
 ######### Trend plot for median bank ##############
 ############ Figure 2 #############################
@@ -301,16 +325,24 @@ plot_med_systemic_crises <- ggplot() +
             mapping = aes(x = Q_num, y = SRE)) +
   geom_line(data = data_plot_med_sys, 
             mapping = aes(x = Q_num, y = SRE, linetype = Medians)) +
+  scale_linetype_manual(values = c('solid', "longdash")) +
+  # geom_smooth(data = data_plot_med_sys, 
+  #             mapping = aes(x = Q_num, y = SRE, group = Medians),
+  #             method = 'lm',
+  #             linetype = 'dotdash',
+  #             color = 'black') +
   scale_x_continuous(breaks = x_breaks_share,
                      labels = x_labels_share) +
   labs(x = "", y = "Median systemic and median US bank's SRE") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  theme(legend.position = "none")
 
 
 #######################################################################
 ############## First and second sample halves #########################
+######################### Figure 5 ####################################
 #######################################################################
 
 median_quarter <- median_quarter %>% 
