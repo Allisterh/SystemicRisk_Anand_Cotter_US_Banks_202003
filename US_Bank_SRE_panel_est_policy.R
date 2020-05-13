@@ -339,21 +339,22 @@ bank_cusip_sys <- bank_cusip_file %>%
 
 ### Tier 1 and 2 combined capital ratio ###
 
-# nest_SRE_t1t2 <- panel_SRE_full_2 %>%
-#   dplyr::select(Q_num, t1_t2_ratio) %>%
-#   dplyr::group_by(Q_num) %>%
-#   dplyr::arrange(Q_num) %>%
-#   tidyr::nest()
+nest_SRE_t1t2_com_eq <- panel_SRE_full_2 %>%
+  dplyr::select(Q_num, com_eq_ratio, t1_t2_ratio) %>%
+  dplyr::group_by(Q_num) %>%
+  dplyr::arrange(Q_num) %>%
+  tidyr::nest() %>%
+  dplyr::mutate('med_t1t2' = purrr::map_dbl(data, function(tib){return(median(tib$t1_t2_ratio, 
+                                                                            na.rm = T))}),
+                'med_com_eq' = purrr::map_dbl(data, function(tib){return(median(tib$com_eq_ratio, 
+                                                                              na.rm = T))}))
 
-nest_SRE_sys <- panel_SRE_full_2 %>%
+nest_SRE_sys_t1t2_com_eq <- panel_SRE_full_2 %>%
   dplyr::select(Q_num, cusip_8, t1_t2_ratio, com_eq_ratio) %>%
   dplyr::filter(cusip_8 %in% bank_cusip_sys$cusip_8) %>%
   dplyr::group_by(Q_num) %>%
   dplyr::arrange(Q_num) %>%
-  tidyr::nest()
-
-
-nest_SRE_sys <- nest_SRE_sys %>%
+  tidyr::nest() %>%
   dplyr::mutate('med_t1t2_sys' = purrr::map_dbl(data, 
                                                 function(tib){return(median(tib$t1_t2_ratio, 
                                                                             na.rm = T))}),
@@ -361,40 +362,88 @@ nest_SRE_sys <- nest_SRE_sys %>%
                                                   function(tib){return(median(tib$com_eq_ratio, 
                                                                               na.rm = T))}))
 
+
 ##################################################################
 ###################### Figures 6 and 7 ###########################
 ##################################################################
+
+nest_SRE_combined <- nest_SRE_t1t2_com_eq %>%
+  dplyr::select(-data) %>%
+  dplyr::full_join(., nest_SRE_sys_t1t2_com_eq, by = 'Q_num') %>%
+  dplyr::select(-data)
 
 ### Plotting the median systemic bank's ratios (Fig 6+7) ###
 x_breaks_sys <- seq(1, 108, by = 4)
 x_labels_sys <- paste0(seq(1993, 2019), "Q1")
 
-## T1 T2 combined
-plot_med_t1t2_sys <- ggplot(nest_SRE_sys, aes(Q_num, med_t1t2_sys)) +
-  geom_point() +
-  geom_line() +
+
+### Combining the median systemic and the median US bank's T1 T2 ratios ###
+
+plot_med_t1t2_combined <- ggplot() +
+  geom_point(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_t1t2)) +
+  geom_line(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_t1t2), 
+            linetype = 'dotted') +
+  geom_point(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_t1t2_sys), 
+             shape = 1) +
+  geom_line(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_t1t2_sys), 
+            linetype = 'twodash') +
   geom_vline(xintercept = 71, linetype = 'dashed') +
-  geom_vline(xintercept = 63, linetype = 'dotdash') +
-#  ylim(11.5, 16) +
-  scale_x_continuous(breaks = x_breaks_sys,
-                     labels = x_labels_sys) +
-  labs(x = "", y = "Median systemic bank's Tier 1 and 2 ratio (combined, in %)") +
+  scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
+  labs(x = "", y = "Median banks' Tier 1 and 2 ratio (combined, in %)") +
   theme_bw() +
   theme(text = element_text(size = 18)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
 
-## Common equity ratio
-plot_med_com_eq_sys <- ggplot(nest_SRE_sys, aes(Q_num, med_com_eq_sys)) +
-  geom_point() +
-  geom_line() +
+# Crises rectangle
+df_rect_crises_2 <- data.frame(x_1 = c(60, 70),
+                               x_2 = c(66, 78),
+                               y_1 = c(11, 11),
+                               y_2 = c(16.5, 16.5))
+
+### Plot with crises superimposed ###
+
+plot_med_t1t2_combined_crises <- plot_med_t1t2_combined +
+  geom_rect(data = df_rect_crises_2,
+            mapping = aes(xmin = x_1, 
+                          xmax = x_2, 
+                          ymin = y_1, 
+                          ymax = y_2),
+            color = "grey",
+            alpha = 0.1)
+
+
+## Common equity ratio combined
+
+
+plot_med_com_eq_combined <- ggplot() +
+  geom_point(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_com_eq)) +
+  geom_line(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_com_eq), 
+            linetype = 'dotted') +
+  geom_point(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_com_eq_sys), 
+             shape = 1) +
+  geom_line(data = nest_SRE_combined, mapping = aes(x = Q_num, y = med_com_eq_sys), 
+            linetype = 'twodash') +
   geom_vline(xintercept = 71, linetype = 'dashed') +
-  geom_vline(xintercept = 65, linetype = 'dotdash') +
-  scale_x_continuous(breaks = x_breaks_sys,
-                     labels = x_labels_sys) +
-  labs(x = "", y = "Median systemic bank's common equity ratio (in %)") +
+  scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
+  labs(x = "", y = "Median banks' common equity ratio (combined, in %)") +
   theme_bw() +
-  theme(text = element_text(size = 20)) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+  theme(text = element_text(size = 18)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+# Crises rectangle
+df_rect_crises_2 <- data.frame(x_1 = c(60, 70),
+                               x_2 = c(66, 78),
+                               y_2 = c(11.5, 11.5),
+                               y_1 = c(7, 7))
+
+plot_med_com_eq_combined_crises <- plot_med_com_eq_combined +
+  geom_rect(data = df_rect_crises_2,
+            mapping = aes(xmin = x_1, 
+                          xmax = x_2, 
+                          ymin = y_1, 
+                          ymax = y_2),
+            color = "grey",
+            alpha = 0.1)
 
 ###############################################################################
 ######## TABLE 5: Mean variables before and after Dodd-Frank ##################

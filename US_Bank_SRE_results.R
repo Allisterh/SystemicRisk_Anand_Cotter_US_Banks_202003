@@ -120,10 +120,10 @@ plot_share_eig_vec_1 <- ggplot(data = nest_share,
 ### Figure 1 ###
 
 top_eig_mat <- sapply(nest_share$top_eig_vec, rbind) %>% t() 
-colnames(top_eig_mat) <- paste0('Eig_', seq(1:ncol(top_eig_tib)))
-top_eig_tib <- top_eig_tib %>%
+colnames(top_eig_mat) <- paste0('Eig_', seq(1:ncol(top_eig_mat)))
+top_eig_tib <- top_eig_mat %>%
   tibble::as_tibble() %>%
-  tibble::add_column('Q_num' = seq(1, nrow(top_eig_tib))) %>%
+  tibble::add_column('Q_num' = seq(1, nrow(top_eig_mat))) %>%
   dplyr::select(Q_num, everything())
 
 top_eig_long <- top_eig_tib %>%
