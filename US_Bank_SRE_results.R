@@ -34,6 +34,8 @@ func_summ_vec <- function(vec)
   skew <- moments::skewness(vec, na.rm = T)
   kurt <- moments::kurtosis(vec, na.rm = T)
   frac_NA <- sum(is.na(vec))/length(vec)
+  quant_25 <- quantile(vec, 0.25, na.rm = T)
+  quant_75 <- quantile(vec, 0.75, na.rm = T)
   
   summ_vec <- return(tibble::tibble('Min' = min, 
                                     'Max' = max, 
@@ -43,7 +45,9 @@ func_summ_vec <- function(vec)
                                     'Skew' = skew,
                                     'Kurt' = kurt,
                                     'IQR' = iqr,
-                                    'SRE_%_Missing' = frac_NA))
+                                    'SRE_%_Missing' = frac_NA,
+                                    'Quant_25' = quant_25,
+                                    'Quant_75' = quant_75))
   
   return(summ_vec)
 }
@@ -129,9 +133,9 @@ top_eig_tib <- top_eig_mat %>%
 top_eig_long <- top_eig_tib %>%
   tidyr::gather(Eig_1:Eig_10, key = 'Eig_vec', value = 'Proportion')
 
-plot_top_eig <- ggplot(data = top_eig_long, 
-                       mapping = aes(x = Q_num, y = Proportion)) +
-  geom_line(mapping = aes(linetype = Eig_vec)) +
+plot_top_eig <- ggplot() +
+  geom_line(data = top_eig_long, 
+            mapping = aes(x = Q_num, y = Proportion, linetype = Eig_vec)) +
   scale_x_continuous(breaks = x_breaks_share,
                      labels = x_labels_share) +
   labs(x = "", y = "Cumulative explanatory power of top eigenvectors") +
@@ -139,6 +143,29 @@ plot_top_eig <- ggplot(data = top_eig_long,
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) + 
   theme(legend.position = "none")
+  
+
+df_rect_crises_0 <- data.frame(x_1 = c(60, 70), x_2 = c(66, 78), 
+                               x_3 = c(22, 38), x_4 = c(24, 40),
+                               y_1 = c(0, 0), y_2 = c(1, 1),
+                               y_3 = c(0,0), y_4 = c(1, 1))
+
+plot_top_eig_crises <- plot_top_eig +
+  geom_rect(data = df_rect_crises_0,
+            mapping = aes(xmin = x_1, 
+                          xmax = x_2, 
+                          ymin = y_1, 
+                          ymax = y_2),
+            color = "grey",
+            alpha = 0.1) +
+  geom_rect(data = df_rect_crises_0,
+            mapping = aes(xmin = x_3, 
+                          xmax = x_4, 
+                          ymin = y_3, 
+                          ymax = y_4),
+            color = "grey",
+            alpha = 0.1)
+  
   
 
 ###################################################
@@ -166,6 +193,16 @@ plot_trend_median <- ggplot(SRE_summ_quarterly_df,
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
 
+
+plot_trend_median_quants <- plot_trend_median +
+  geom_point(data = SRE_summ_quarterly_df, 
+             mapping = aes(x = Quarters, y = Quant_75)) +
+  geom_line(data = SRE_summ_quarterly_df, 
+            mapping = aes(x = Quarters, y = Quant_75), linetype = 'dotted') +
+  geom_point(data = SRE_summ_quarterly_df, 
+             mapping = aes(x = Quarters, y = Quant_25)) +
+  geom_line(data = SRE_summ_quarterly_df, 
+            mapping = aes(x = Quarters, y = Quant_25), linetype = 'dotted')
 
 ###################################
 ###### SRE Boxplots ###############
@@ -314,11 +351,18 @@ plot_med_systemic <- ggplot(data_plot_med_sys,
 
 ### With crises shaded in grey ###
 plot_med_systemic_crises <- ggplot() +
-  geom_rect(data = df_rect_crises,
+  geom_rect(data = df_rect_crises_0,
             mapping = aes(xmin = x_1, 
                           xmax = x_2, 
-                          ymin = y_1, 
-                          ymax = y_2),
+                          ymin = 100*y_1, 
+                          ymax = 100*y_2),
+            color = "grey",
+            alpha = 0.1) +
+  geom_rect(data = df_rect_crises_0,
+            mapping = aes(xmin = x_3, 
+                          xmax = x_4, 
+                          ymin = 100*y_3, 
+                          ymax = 100*y_4),
             color = "grey",
             alpha = 0.1) +
   geom_point(data = data_plot_med_sys,
@@ -349,11 +393,13 @@ median_quarter <- median_quarter %>%
   dplyr::mutate('Period' = dplyr::case_when(Q_num < max(Q_num)/2 ~ 'H1', 
                                             Q_num >= max(Q_num)/2 ~ 'H2'))
 
-plot_med_H1H2 <- ggplot(data = median_quarter, 
-                        mapping = aes(x = Q_num, y = med_full)) +
-  geom_point() +
-  geom_line() +
-  geom_smooth(mapping = aes(group = Period),
+plot_med_H1H2 <- ggplot() +
+  geom_point(data = median_quarter, 
+             mapping = aes(x = Q_num, y = med_full)) +
+  geom_line(data = median_quarter, 
+            mapping = aes(x = Q_num, y = med_full)) +
+  geom_smooth(data = median_quarter, 
+              mapping = aes(x = Q_num, y = med_full, group = Period),
               method = 'lm',
               linetype = 'dotdash',
               color = 'black') +
@@ -364,6 +410,22 @@ plot_med_H1H2 <- ggplot(data = median_quarter,
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
 
+plot_med_H1H2_crises <- plot_med_H1H2 +
+  geom_rect(data = df_rect_crises_0,
+            mapping = aes(xmin = x_1, 
+                          xmax = x_2, 
+                          ymin = 15, 
+                          ymax = 70*y_2),
+            color = "grey",
+            alpha = 0.1) +
+  geom_rect(data = df_rect_crises_0,
+            mapping = aes(xmin = x_3, 
+                          xmax = x_4, 
+                          ymin = 15, 
+                          ymax = 70*y_4),
+            color = "grey",
+            alpha = 0.1) 
+  
 
 ###################################################################
 ##################### TABLE 1 #####################################
