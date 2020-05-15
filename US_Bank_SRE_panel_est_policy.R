@@ -10,6 +10,8 @@ library(lmtest)
 library(sandwich)
 library(plm)
 library(poweRlaw)
+library(tseries)
+library(fitdistrplus)
 
 ### Source prior script for computing systematic risk exposures ### 
 name_script_file <- "US_Bank_SRE_results.R"
@@ -620,3 +622,16 @@ mean_test_share_GREZ_ks <- ks.test(nest_share_GREZ$eig_vec_1,
                                    nest_share_no_GREZ$eig_vec_1,
                                    alternative = "less")
 
+#####################################################################
+############ Tests for mean reversion and distribution ##############
+#####################################################################
+
+test_SRE_adf <- tseries::adf.test(SRE_US_banks_long$SRE_2, alternative = 'stationary')
+test_SRE_KPSS <- tseries::kpss.test(SRE_US_banks_long$SRE_2, null = "Trend")
+
+hist_SRE_pool <- hist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0], 
+                      breaks = 100)
+plot_density_SRE_pool <- plot(density(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0]))
+normfit_SRE_pool <- fitdist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0],
+                                 'norm')
+plot_normfit <- normfit_SRE_pool %>% plot()
