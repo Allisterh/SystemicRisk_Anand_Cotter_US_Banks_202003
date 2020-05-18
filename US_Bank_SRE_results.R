@@ -780,6 +780,9 @@ print_trend_systemic_2 <- dplyr::bind_rows(print_trend_systemic) %>% t()
 
 #### Trend during crises: GR and EZ #####################
 
+# Note that indices are displaced by one unit due to 
+# SRE estimation starting from period 2 as opposed to 1
+
 # Dummy for the great recession
 GR <- rep(0, nrow(median_quarter))
 GR[59:65] <- 1
@@ -788,11 +791,20 @@ GR[59:65] <- 1
 EZ <- rep(0, nrow(median_quarter))
 EZ[69:77] <- 1
 
-median_quarter <- median_quarter %>%
-  dplyr::mutate('GR' = GR, 'EZ' = EZ)
+# Dummy for LTCM
+LTCM <- rep(0, nrow(median_quarter))
+LTCM[21:23] <- 1
 
-formula_full_trend_crises <- med_full ~ Q_num + GR + EZ
-formula_sys_trend_crises <- med_sys ~ Q_num + GR + EZ
+# Dummy for Dotcom bust
+Dotcom <- rep(0, nrow(median_quarter))
+Dotcom[37:39] <- 1
+
+median_quarter <- median_quarter %>%
+  dplyr::mutate('LTCM' = LTCM, 'Dotcom' = Dotcom, 'GR' = GR, 'EZ' = EZ,
+                'Crisis' = GR + EZ + LTCM + Dotcom)
+
+formula_full_trend_crises <- med_full ~ Q_num + GR + EZ + LTCM + Dotcom
+formula_sys_trend_crises <- med_sys ~ Q_num + GR + EZ + LTCM + Dotcom
 
 func_trend_crises <- function(df, formula = formula_full_trend_crises)
 {

@@ -516,76 +516,102 @@ mean_test_SRE_ks <- ks.test(SRE_sys_Dodd_Frank_pre$SRE_2,
 panel_SRE_crises <- panel_SRE_full_2 %>%
   dplyr::select(Q_num, SRE_2) %>%
   dplyr::arrange(Q_num) %>%
-  dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(60, 66) ~ 1,
+  dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(59, 65) ~ 1,
                                         TRUE ~ 0),
-                'EZ' = dplyr::case_when(Q_num %in% seq(70, 78) ~ 1,
+                'EZ' = dplyr::case_when(Q_num %in% seq(69, 77) ~ 1,
                                         TRUE ~ 0),
-                'Crises' = dplyr::case_when(GR == 1 | EZ == 1 ~ 1,
+                'LTCM' = dplyr::case_when(Q_num %in% seq(21, 23) ~ 1,
+                                          TRUE ~ 0), 
+                'Dotcom' = dplyr::case_when(Q_num %in% seq(37, 39) ~ 1, 
+                                            TRUE ~ 0),
+                'Crises' = dplyr::case_when(GR == 1 | EZ == 1 | LTCM == 1 | Dotcom == 1 ~ 1,
                                             TRUE ~ 0))
 
 ### The Great Recession ###
 
-SRE_GR <- panel_SRE_crises %>%
-  dplyr::filter(GR == 1)
-SRE_no_GR <- panel_SRE_crises %>%
-  dplyr::filter(GR == 0)
+# T test
+mean_test_SRE_GR <- t.test(filter(panel_SRE_crises, GR == 1)$SRE_2,
+                           filter(panel_SRE_crises, GR == 0)$SRE_2,
+                           alternative = "greater")
 
-# T test (parametric)
-mean_test_SRE_GR <- t.test(SRE_GR$SRE_2,
-                        SRE_no_GR$SRE_2,
-                        alternative = "greater")
-
-# (Mann-Whitney) Wilcoxon test (nonparametric)
-mean_test_SRE_GR_wilcox <- wilcox.test(SRE_GR$SRE_2,
-                                       SRE_no_GR$SRE_2,
+# Wilcox test
+mean_test_SRE_GR_wilcox <- wilcox.test(filter(panel_SRE_crises, GR == 1)$SRE_2,
+                                       filter(panel_SRE_crises, GR == 0)$SRE_2,
                                        alternative = "greater")
+
 # KS test
-mean_test_SRE_GR_ks <- ks.test(SRE_GR$SRE_2,
-                               SRE_no_GR$SRE_2,
+mean_test_SRE_GR_ks <- ks.test(filter(panel_SRE_crises, GR == 1)$SRE_2,
+                               filter(panel_SRE_crises, GR == 0)$SRE_2,
                                alternative = "less")
 
 ### The Eurozone Crisis ###
 
-SRE_EZ <- panel_SRE_crises %>%
-  dplyr::filter(EZ == 1)
-SRE_no_EZ <- panel_SRE_crises %>%
-  dplyr::filter(EZ == 0)
-
-# T test (parametric)
-mean_test_SRE_EZ <- t.test(SRE_EZ$SRE_2,
-                           SRE_no_EZ$SRE_2,
+# T test
+mean_test_SRE_EZ <- t.test(filter(panel_SRE_crises, EZ == 1)$SRE_2,
+                           filter(panel_SRE_crises, EZ == 0)$SRE_2,
                            alternative = "greater")
 
-# (Mann-Whitney) Wilcoxon test (nonparametric)
-mean_test_SRE_EZ_wilcox <- wilcox.test(SRE_EZ$SRE_2,
-                                       SRE_no_EZ$SRE_2,
+# Wilcox test
+mean_test_SRE_EZ_wilcox <- wilcox.test(filter(panel_SRE_crises, EZ == 1)$SRE_2,
+                                       filter(panel_SRE_crises, EZ == 0)$SRE_2,
                                        alternative = "greater")
+
 # KS test
-mean_test_SRE_EZ_ks <- ks.test(SRE_EZ$SRE_2,
-                               SRE_no_EZ$SRE_2,
+mean_test_SRE_EZ_ks <- ks.test(filter(panel_SRE_crises, EZ == 1)$SRE_2,
+                               filter(panel_SRE_crises, EZ == 0)$SRE_2,
                                alternative = "less")
+
+### The LTCM Crisis ###
+
+# T test
+mean_test_SRE_LTCM <- t.test(filter(panel_SRE_crises, LTCM == 1)$SRE_2,
+                           filter(panel_SRE_crises, LTCM == 0)$SRE_2,
+                           alternative = "greater")
+
+# Wilcox test
+mean_test_SRE_LTCM_wilcox <- wilcox.test(filter(panel_SRE_crises, LTCM == 1)$SRE_2,
+                                       filter(panel_SRE_crises, LTCM == 0)$SRE_2,
+                                       alternative = "greater")
+
+# KS test
+mean_test_SRE_LTCM_ks <- ks.test(filter(panel_SRE_crises, LTCM == 1)$SRE_2,
+                               filter(panel_SRE_crises, LTCM == 0)$SRE_2,
+                               alternative = "less")
+
+### The Dotcom Crisis ###
+
+# T test
+mean_test_SRE_Dotcom <- t.test(filter(panel_SRE_crises, Dotcom == 1)$SRE_2,
+                             filter(panel_SRE_crises, Dotcom == 0)$SRE_2,
+                             alternative = "greater")
+
+# Wilcox test
+mean_test_SRE_Dotcom_wilcox <- wilcox.test(filter(panel_SRE_crises, Dotcom == 1)$SRE_2,
+                                         filter(panel_SRE_crises, Dotcom == 0)$SRE_2,
+                                         alternative = "greater")
+
+# KS test
+mean_test_SRE_Dotcom_ks <- ks.test(filter(panel_SRE_crises, Dotcom == 1)$SRE_2,
+                                 filter(panel_SRE_crises, Dotcom == 0)$SRE_2,
+                                 alternative = "less")
 
 
 ### Crises ###
 
-SRE_GREZ <- panel_SRE_crises %>%
-  dplyr::filter(Crises == 1)
-SRE_no_GREZ <- panel_SRE_crises %>%
-  dplyr::filter(Crises == 0)
+# T test
+mean_test_SRE_crises <- t.test(filter(panel_SRE_crises, Crises == 1)$SRE_2,
+                               filter(panel_SRE_crises, Crises == 0)$SRE_2,
+                               alternative = "greater")
 
-# T test (parametric)
-mean_test_SRE_GREZ <- t.test(SRE_GREZ$SRE_2,
-                           SRE_no_GREZ$SRE_2,
-                           alternative = "greater")
+# Wilcox test
+mean_test_SRE_crises_wilcox <- wilcox.test(filter(panel_SRE_crises, Crises == 1)$SRE_2,
+                                           filter(panel_SRE_crises, Crises == 0)$SRE_2,
+                                           alternative = "greater")
 
-# (Mann-Whitney) Wilcoxon test (nonparametric)
-mean_test_SRE_GREZ_wilcox <- wilcox.test(SRE_GREZ$SRE_2,
-                                       SRE_no_GREZ$SRE_2,
-                                       alternative = "greater")
 # KS test
-mean_test_SRE_GREZ_ks <- ks.test(SRE_GREZ$SRE_2,
-                               SRE_no_GREZ$SRE_2,
-                               alternative = "less")
+mean_test_SRE_crises_ks <- ks.test(filter(panel_SRE_crises, Crises == 1)$SRE_2,
+                                   filter(panel_SRE_crises, Crises == 0)$SRE_2,
+                                   alternative = "less")
 
 
 ####### Mean PC1 contribution ########
