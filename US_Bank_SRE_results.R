@@ -602,19 +602,20 @@ nest_bank_trend <- nest_bank_trend %>%
   dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
 
 ### p values for bank trends ###
-
+func_coeff <- function(vec){return(vec[1])}
 func_pvalue <- function(vec) {return(vec[4])}
 
 nest_bank_trend <- nest_bank_trend %>%
-  dplyr::mutate('p_value' = purrr::map_dbl(print_trend, func_pvalue)) %>%
+  dplyr::mutate('p_value' = purrr::map_dbl(print_trend, func_pvalue),
+                'coef' = purrr::map_dbl(print_trend, func_coeff)) %>%
   dplyr::arrange(p_value)
 
 banks_trend_10 <- nest_bank_trend %>%
-  dplyr::filter(p_value <= 0.10)
+  dplyr::filter(p_value <= 0.10 & coef > 0)
 banks_trend_5 <- nest_bank_trend %>%
-  dplyr::filter(p_value <= 0.05)
+  dplyr::filter(p_value <= 0.05 & coef > 0)
 banks_trend_1 <- nest_bank_trend %>%
-  dplyr::filter(p_value <= 0.01)
+  dplyr::filter(p_value <= 0.01 & coef > 0)
 
 
 
