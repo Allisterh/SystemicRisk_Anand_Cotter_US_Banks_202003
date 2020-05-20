@@ -34,8 +34,10 @@ func_summ_vec <- function(vec)
   skew <- moments::skewness(vec, na.rm = T)
   kurt <- moments::kurtosis(vec, na.rm = T)
   frac_NA <- sum(is.na(vec))/length(vec)
+  quant_5 <- quantile(vec, 0.05, na.rm = T)
   quant_25 <- quantile(vec, 0.25, na.rm = T)
   quant_75 <- quantile(vec, 0.75, na.rm = T)
+  quant_95 <- quantile(vec, 0.95, na.rm = T)
   
   summ_vec <- return(tibble::tibble('Min' = min, 
                                     'Max' = max, 
@@ -46,8 +48,10 @@ func_summ_vec <- function(vec)
                                     'Kurt' = kurt,
                                     'IQR' = iqr,
                                     'SRE_%_Missing' = frac_NA,
+                                    'Quant_5' = quant_5,
                                     'Quant_25' = quant_25,
-                                    'Quant_75' = quant_75))
+                                    'Quant_75' = quant_75,
+                                    'Quant_95' = quant_95))
   
   return(summ_vec)
 }
@@ -195,14 +199,22 @@ plot_trend_median <- ggplot(SRE_summ_quarterly_df,
 
 
 plot_trend_median_quants <- plot_trend_median +
+  # geom_point(data = SRE_summ_quarterly_df, 
+  #            mapping = aes(x = Quarters, y = Quant_75)) +
+  # geom_line(data = SRE_summ_quarterly_df, 
+  #           mapping = aes(x = Quarters, y = Quant_75), linetype = 'dotted') +
+  # geom_point(data = SRE_summ_quarterly_df, 
+  #            mapping = aes(x = Quarters, y = Quant_25)) +
+  # geom_line(data = SRE_summ_quarterly_df, 
+  #           mapping = aes(x = Quarters, y = Quant_25), linetype = 'dotted') +
   geom_point(data = SRE_summ_quarterly_df, 
-             mapping = aes(x = Quarters, y = Quant_75)) +
+             mapping = aes(x = Quarters, y = Quant_95)) +
   geom_line(data = SRE_summ_quarterly_df, 
-            mapping = aes(x = Quarters, y = Quant_75), linetype = 'dotted') +
+            mapping = aes(x = Quarters, y = Quant_95), linetype = 'dotted') +
   geom_point(data = SRE_summ_quarterly_df, 
-             mapping = aes(x = Quarters, y = Quant_25)) +
+             mapping = aes(x = Quarters, y = Quant_5)) +
   geom_line(data = SRE_summ_quarterly_df, 
-            mapping = aes(x = Quarters, y = Quant_25), linetype = 'dotted')
+            mapping = aes(x = Quarters, y = Quant_5), linetype = 'dotted')
 
 ###################################
 ###### SRE Boxplots ###############
@@ -777,9 +789,9 @@ names(print_trend_systemic) <- nest_bank_trend_systemic$Bank
 
 print_trend_systemic_2 <- dplyr::bind_rows(print_trend_systemic) %>% t()
 
-#########################################################
-
-#### Trend during crises: GR and EZ #####################
+##########################################################
+################ Trend during crises #####################
+##########################################################
 
 # Note that indices are displaced by one unit due to 
 # SRE estimation starting from period 2 as opposed to 1
@@ -827,6 +839,70 @@ print_crises_full <- trend_crises_full$coefficients
 print_crises_sys <- trend_crises_sys$coefficients
 
 #########################################################
+
+#########################################################
+##### Individual banks' SRE trends in crises ############
+#########################################################
+
+#### Computing Newey-West trends for all banks during crises ####
+
+RHS_crises <- median_quarter %>%
+  dplyr::select(Q_num, LTCM:Crisis)
+
+func_append_crises_tib <- function(tib)
+{
+  row_num <- 
+  sub_tib <- median_quarter[tib$Q_num, -c(2:6)]
+  tib_2 <- tib %>% tibble::tibble(add_column(., sub_tib))
+  return(tib_2)
+}
+
+nest_bank_trend_crises <- SRE_US_banks_long %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(Bank) %>%
+  tidyr::nest()
+
+func_trend_NW_nested <- function(df)
+{
+  # This function computes the linear trend and reports
+  # heteroskedasticity and autocorrelation consistent errors
+  # according to Newey West
+  
+  rhs <- df$Q_num #dependent variable
+  lhs <- df$SRE_2 #independent variable
+  
+  lm_trend <- lm(lhs ~ rhs, data = df)
+  summ_trend <- summary(lm_trend)
+  # vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+  vcov_err <- sandwich::NeweyWest(lm_trend)
+  summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
+  
+  return(summ_trend)
+}
+
+nest_bank_trend <- nest_bank_trend %>%
+  dplyr::mutate('obs' = purrr::map_dbl(data, nrow)) %>%
+  dplyr::filter(obs > 10) %>%
+  dplyr::mutate('trend_NW' = purrr::map(data, func_trend_NW_nested)) %>%
+  dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
+
+### p values for bank trends ###
+func_coeff <- function(vec){return(vec[1])}
+func_pvalue <- function(vec) {return(vec[4])}
+
+nest_bank_trend <- nest_bank_trend %>%
+  dplyr::mutate('p_value' = purrr::map_dbl(print_trend, func_pvalue),
+                'coef' = purrr::map_dbl(print_trend, func_coeff)) %>%
+  dplyr::arrange(p_value)
+
+banks_trend_10 <- nest_bank_trend %>%
+  dplyr::filter(p_value <= 0.10 & coef > 0)
+banks_trend_5 <- nest_bank_trend %>%
+  dplyr::filter(p_value <= 0.05 & coef > 0)
+banks_trend_1 <- nest_bank_trend %>%
+  dplyr::filter(p_value <= 0.01 & coef > 0)
+
+
 
 ########### Checking power law fit ######################
 
