@@ -846,62 +846,62 @@ print_crises_sys <- trend_crises_sys$coefficients
 
 #### Computing Newey-West trends for all banks during crises ####
 
-RHS_crises <- median_quarter %>%
-  dplyr::select(Q_num, LTCM:Crisis)
-
-func_append_crises_tib <- function(tib)
-{
-  row_num <- 
-  sub_tib <- median_quarter[tib$Q_num, -c(2:6)]
-  tib_2 <- tib %>% tibble::tibble(add_column(., sub_tib))
-  return(tib_2)
-}
-
-nest_bank_trend_crises <- SRE_US_banks_long %>%
-  dplyr::ungroup() %>%
-  dplyr::group_by(Bank) %>%
-  tidyr::nest()
-
-func_trend_NW_nested <- function(df)
-{
-  # This function computes the linear trend and reports
-  # heteroskedasticity and autocorrelation consistent errors
-  # according to Newey West
-  
-  rhs <- df$Q_num #dependent variable
-  lhs <- df$SRE_2 #independent variable
-  
-  lm_trend <- lm(lhs ~ rhs, data = df)
-  summ_trend <- summary(lm_trend)
-  # vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
-  vcov_err <- sandwich::NeweyWest(lm_trend)
-  summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
-  
-  return(summ_trend)
-}
-
-nest_bank_trend <- nest_bank_trend %>%
-  dplyr::mutate('obs' = purrr::map_dbl(data, nrow)) %>%
-  dplyr::filter(obs > 10) %>%
-  dplyr::mutate('trend_NW' = purrr::map(data, func_trend_NW_nested)) %>%
-  dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
-
-### p values for bank trends ###
-func_coeff <- function(vec){return(vec[1])}
-func_pvalue <- function(vec) {return(vec[4])}
-
-nest_bank_trend <- nest_bank_trend %>%
-  dplyr::mutate('p_value' = purrr::map_dbl(print_trend, func_pvalue),
-                'coef' = purrr::map_dbl(print_trend, func_coeff)) %>%
-  dplyr::arrange(p_value)
-
-banks_trend_10 <- nest_bank_trend %>%
-  dplyr::filter(p_value <= 0.10 & coef > 0)
-banks_trend_5 <- nest_bank_trend %>%
-  dplyr::filter(p_value <= 0.05 & coef > 0)
-banks_trend_1 <- nest_bank_trend %>%
-  dplyr::filter(p_value <= 0.01 & coef > 0)
-
+# RHS_crises <- median_quarter %>%
+#   dplyr::select(Q_num, LTCM:Crisis)
+# 
+# func_append_crises_tib <- function(tib)
+# {
+#   row_num <- 
+#   sub_tib <- median_quarter[tib$Q_num, -c(2:6)]
+#   tib_2 <- tib %>% tibble::tibble(add_column(., sub_tib))
+#   return(tib_2)
+# }
+# 
+# nest_bank_trend_crises <- SRE_US_banks_long %>%
+#   dplyr::ungroup() %>%
+#   dplyr::group_by(Bank) %>%
+#   tidyr::nest()
+# 
+# func_trend_NW_nested <- function(df)
+# {
+#   # This function computes the linear trend and reports
+#   # heteroskedasticity and autocorrelation consistent errors
+#   # according to Newey West
+#   
+#   rhs <- df$Q_num #dependent variable
+#   lhs <- df$SRE_2 #independent variable
+#   
+#   lm_trend <- lm(lhs ~ rhs, data = df)
+#   summ_trend <- summary(lm_trend)
+#   # vcov_err <- sandwich::NeweyWest(lm_trend, lag = 2, prewhite = F, adjust = T)
+#   vcov_err <- sandwich::NeweyWest(lm_trend)
+#   summ_trend$coefficients <- unclass(lmtest::coeftest(lm_trend, vcov. = vcov_err))
+#   
+#   return(summ_trend)
+# }
+# 
+# nest_bank_trend <- nest_bank_trend %>%
+#   dplyr::mutate('obs' = purrr::map_dbl(data, nrow)) %>%
+#   dplyr::filter(obs > 10) %>%
+#   dplyr::mutate('trend_NW' = purrr::map(data, func_trend_NW_nested)) %>%
+#   dplyr::mutate('print_trend' = purrr::map(trend_NW, func_trend_print))
+# 
+# ### p values for bank trends ###
+# func_coeff <- function(vec){return(vec[1])}
+# func_pvalue <- function(vec) {return(vec[4])}
+# 
+# nest_bank_trend <- nest_bank_trend %>%
+#   dplyr::mutate('p_value' = purrr::map_dbl(print_trend, func_pvalue),
+#                 'coef' = purrr::map_dbl(print_trend, func_coeff)) %>%
+#   dplyr::arrange(p_value)
+# 
+# banks_trend_10 <- nest_bank_trend %>%
+#   dplyr::filter(p_value <= 0.10 & coef > 0)
+# banks_trend_5 <- nest_bank_trend %>%
+#   dplyr::filter(p_value <= 0.05 & coef > 0)
+# banks_trend_1 <- nest_bank_trend %>%
+#   dplyr::filter(p_value <= 0.01 & coef > 0)
+# 
 
 
 ########### Checking power law fit ######################
