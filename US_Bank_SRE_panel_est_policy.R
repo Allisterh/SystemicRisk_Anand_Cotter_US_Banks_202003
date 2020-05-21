@@ -12,6 +12,7 @@ library(plm)
 library(poweRlaw)
 library(tseries)
 library(fitdistrplus)
+library(Matrix)
 
 ### Source prior script for computing systematic risk exposures ### 
 name_script_file <- "US_Bank_SRE_results.R"
@@ -514,7 +515,7 @@ mean_test_SRE_ks <- ks.test(SRE_sys_Dodd_Frank_pre$SRE_2,
 ####### SRE ########
 
 panel_SRE_crises <- panel_SRE_full_2 %>%
-  dplyr::select(Q_num, SRE_2) %>%
+  dplyr::select(Q_num, cusip_8, SRE_2) %>%
   dplyr::arrange(Q_num) %>%
   dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(59, 65) ~ 1,
                                         TRUE ~ 0),
@@ -614,12 +615,102 @@ mean_test_SRE_crises_ks <- ks.test(filter(panel_SRE_crises, Crises == 1)$SRE_2,
                                    alternative = "less")
 
 
-####### Mean PC1 contribution ########
+#######################################################
+####### Trends for full sample during crises ##########
+#######################################################
 
+nest_trend_crises <- panel_SRE_crises %>%
+  dplyr::group_by(cusip_8) %>%
+  tidyr::nest() 
 
-######################################
-############ TABLE 4 #################
-######################################
+form_trend_crises <- SRE_2 ~ Q_num + LTCM + Dotcom + GR + EZ
+form_trend_any_crisis <- SRE_2 ~ Q_num + Crises
+
+func_trend_crises_2 <- function(tib)
+{
+  formula = form_trend_crises
+  lm_trend <- lm(formula = formula, data = tib)
+  summ_trend <- summary(lm_trend)
+  summ_trend_coef <- summ_trend$coefficients
+  
+  return(summ_trend_coef)
+}
+
+nest_trend_crises_2 <- nest_trend_crises %>%
+  dplyr::mutate('trend_crises' = purrr::map(data, func_trend_crises_2),
+                'coef' = purrr::map(trend_crises, function(df){df[, 1]}),
+                'p_val' = purrr::map(trend_crises, function(df){df[, 4]}))
+
+func_Q_num_pick <- function(name_vec) {return(name_vec['Q_num'])}
+
+func_ltcm_pick <- function(name_vec)
+{
+  if ('LTCM' %in% names(name_vec))
+  {
+    return(name_vec['LTCM'])
+  } else
+  {
+    return(NA)
+  }
+}
+
+func_Dotcom_pick <- function(name_vec)
+{
+  if ('LTCM' %in% names(name_vec))
+  {
+    return(name_vec['Dotcom'])
+  } else
+  {
+    return(NA)
+  }
+}
+
+func_GR_pick <- function(name_vec)
+{
+  if ('GR' %in% names(name_vec))
+  {
+    return(name_vec['GR'])
+  } else
+  {
+    return(NA)
+  }
+}
+
+func_EZ_pick <- function(name_vec)
+{
+  if ('EZ' %in% names(name_vec))
+  {
+    return(name_vec['EZ'])
+  } else
+  {
+    return(NA)
+  }
+}
+
+nest_trend_crises_3 <- nest_trend_crises_2 %>%
+  dplyr::select(cusip_8, coef, p_val) %>%
+  dplyr::mutate('coef_ltcm' = purrr::map_dbl(coef, func_ltcm_pick),
+                'coef_dotcom' = purrr::map_dbl(coef, func_Dotcom_pick),
+                'coef_GR' = purrr::map_dbl(coef, func_GR_pick),
+                'coef_EZ' = purrr::map_dbl(coef, func_EZ_pick),
+                'p_val_ltcm' = purrr::map_dbl(p_val, func_ltcm_pick),
+                'p_val_dotcom' = purrr::map_dbl(p_val, func_Dotcom_pick),
+                'p_val_GR' = purrr::map_dbl(p_val, func_GR_pick),
+                'p_val_EZ' = purrr::map_dbl(p_val, func_EZ_pick)) %>%
+  dplyr::select(-c(coef, p_val))
+
+ltcm_tib <- nest_trend_crises_3 %>%
+  dplyr::select(cusip_8, coef_ltcm, p_val_ltcm)
+dotcom_tib <- nest_trend_crises_3 %>%
+  dplyr::select(cusip_8, coef_dotcom, p_val_dotcom)
+GR_tib <- nest_trend_crises_3 %>%
+  dplyr::select(cusip_8, coef_GR, p_val_GR)
+EZ_tib <- nest_trend_crises_3 %>%
+  dplyr::select(cusip_8, coef_EZ, p_val_EZ)
+
+####################################################
+####### Mean PC1 contribution during crises ########
+####################################################
 
 nest_share_crises <- nest_share %>%
   dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(60, 66) ~ 1,
@@ -661,3 +752,11 @@ plot_density_SRE_pool <- plot(density(SRE_US_banks_long$SRE_2[SRE_US_banks_long$
 normfit_SRE_pool <- fitdist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0],
                                  'norm')
 plot_normfit <- normfit_SRE_pool %>% plot()
+
+
+
+
+####################################################################
+############## Linear Trends During Crises #########################
+####################################################################
+
