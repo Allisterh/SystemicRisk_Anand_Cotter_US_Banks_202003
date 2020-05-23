@@ -708,6 +708,46 @@ GR_tib <- nest_trend_crises_3 %>%
 EZ_tib <- nest_trend_crises_3 %>%
   dplyr::select(cusip_8, coef_EZ, p_val_EZ)
 
+#####################################################
+####### Any crisis trends ###########################
+#####################################################
+
+func_trend_crises_2_alt <- function(tib)
+{
+  formula = form_trend_any_crisis
+  lm_trend <- lm(formula = formula, data = tib)
+  summ_trend <- summary(lm_trend)
+  summ_trend_coef <- summ_trend$coefficients
+  
+  return(summ_trend_coef)
+}
+
+nest_trend_crises_2_alt <- nest_trend_crises %>%
+  dplyr::mutate('trend' = purrr::map(data, func_trend_crises_2_alt),
+                'coef' = purrr::map(trend, function(df){df[, 1]}),
+                'p_val' = purrr::map(trend, function(df){df[, 4]}))
+
+func_crisis_pick <- function(name_vec)
+{
+  if ('Crises' %in% names(name_vec))
+  {
+    return(name_vec['Crises'])
+  } else
+  {
+    return(NA)
+  }
+}
+
+
+nest_trend_crises_3_alt <- nest_trend_crises_2_alt %>%
+  dplyr::select(cusip_8, coef, p_val) %>%
+  dplyr::mutate('coef_crisis' = purrr::map_dbl(coef, func_crisis_pick),
+                'p_val_crisis' = purrr::map_dbl(p_val, func_crisis_pick)) %>%
+  dplyr::select(-c(coef, p_val))
+
+crisis_tib_any <- nest_trend_crises_3_alt %>%
+  dplyr::select(cusip_8, coef_crisis, p_val_crisis)
+
 ####################################################
 ####### Mean PC1 contribution during crises ########
 ####################################################
