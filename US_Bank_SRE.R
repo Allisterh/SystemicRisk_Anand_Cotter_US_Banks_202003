@@ -277,6 +277,8 @@ nest_quarter_PC <- nest_quarter_PC %>%
   # ignore NA items
   dplyr::filter(!(purrr::map_lgl(eig_vec_lag, 
                                  function(df){return(any(is.na(df)))}))) %>%
+  # ignore empty (NULL) eigvec lag 
+  dplyr::filter(!(purrr::map_lgl(eig_vec_lag, is.null))) %>%
   dplyr::mutate('data_qtr_clean_2' = purrr::map(data_qtr_clean, #ignore the first date column
                                                 function(df){return(df[,-1])}),
                 'pc_full' = purrr::map2(data_qtr_clean_2, eig_vec_lag, 

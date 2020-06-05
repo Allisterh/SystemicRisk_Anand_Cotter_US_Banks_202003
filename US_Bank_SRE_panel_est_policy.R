@@ -752,32 +752,49 @@ crisis_tib_any <- nest_trend_crises_3_alt %>%
 ####### Mean PC1 contribution during crises ########
 ####################################################
 
-nest_share_crises <- nest_share %>%
-  dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(60, 66) ~ 1,
-                                        TRUE ~ 0),
-                'EZ' = dplyr::case_when(Q_num %in% seq(70, 78) ~ 1,
-                                        TRUE ~ 0),
-                'Crises' = dplyr::case_when(GR == 1 | EZ == 1 ~ 1,
-                                            TRUE ~ 0))
 
-nest_share_GREZ <- nest_share_crises %>%
-  dplyr::filter(Crises == 1)
-nest_share_no_GREZ <- nest_share_crises %>%
-  dplyr::filter(Crises == 0)
+nest_share_crises <- nest_share %>%
+  dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(59, 65) ~ 1,
+                                        TRUE ~ 0),
+                'EZ' = dplyr::case_when(Q_num %in% seq(69, 77) ~ 1,
+                                        TRUE ~ 0),
+                'LTCM' = dplyr::case_when(Q_num %in% seq(21, 23) ~ 1,
+                                          TRUE ~ 0), 
+                'Dotcom' = dplyr::case_when(Q_num %in% seq(37, 39) ~ 1, 
+                                            TRUE ~ 0),
+                'Crises' = dplyr::case_when(GR == 1 | EZ == 1 | LTCM == 1 | Dotcom == 1 ~ 1,
+                                            TRUE ~ 0))
+######## ANY CRISIS #########
 
 # T test (parametric)
-mean_test_share_GREZ <- t.test(nest_share_GREZ$eig_vec_1,
-                             nest_share_no_GREZ$eig_vec_1,
-                             alternative = "greater")
+mean_test_share_crises <- t.test(filter(nest_share_crises, Crises == 1)$eig_vec_1,
+                                 filter(nest_share_crises, Crises == 0)$eig_vec_1,
+                                 alternative = "greater")
 
 # (Mann-Whitney) Wilcoxon test (nonparametric)
-mean_test_share_GREZ_wilcox <- wilcox.test(nest_share_GREZ$eig_vec_1,
-                                           nest_share_no_GREZ$eig_vec_1,
+mean_test_share_crises_wilcox <- wilcox.test(filter(nest_share_crises, Crises == 1)$eig_vec_1,
+                                           filter(nest_share_crises, Crises == 0)$eig_vec_1,
                                            alternative = "greater")
 # KS test
-mean_test_share_GREZ_ks <- ks.test(nest_share_GREZ$eig_vec_1,
-                                   nest_share_no_GREZ$eig_vec_1,
+mean_test_share_crises_ks <- ks.test(filter(nest_share_crises, Crises == 1)$eig_vec_1,
+                                   filter(nest_share_crises, Crises == 0)$eig_vec_1,
                                    alternative = "less")
+######### GR or EZ ##########
+
+# T test (parametric)
+mean_test_share_GREZ <- t.test(filter(nest_share_crises, GR == 1 | EZ == 1)$eig_vec_1,
+                                 filter(nest_share_crises, Crises == 0)$eig_vec_1,
+                                 alternative = "greater")
+
+# (Mann-Whitney) Wilcoxon test (nonparametric)
+mean_test_share_GREZ_wilcox <- wilcox.test(filter(nest_share_crises, GR == 1 | EZ == 1)$eig_vec_1,
+                                             filter(nest_share_crises, GR == 1 | EZ == 1)$eig_vec_1,
+                                             alternative = "greater")
+# KS test
+mean_test_share_GREZ_ks <- ks.test(filter(nest_share_crises, GR == 1 | EZ == 1)$eig_vec_1,
+                                     filter(nest_share_crises, GR == 1 | EZ == 1)$eig_vec_1,
+                                     alternative = "less")
+
 
 #####################################################################
 ############ Tests for mean reversion and distribution ##############
@@ -793,10 +810,4 @@ normfit_SRE_pool <- fitdist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0]
                                  'norm')
 plot_normfit <- normfit_SRE_pool %>% plot()
 
-
-
-
-####################################################################
-############## Linear Trends During Crises #########################
-####################################################################
 
