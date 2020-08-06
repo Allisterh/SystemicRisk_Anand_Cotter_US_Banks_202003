@@ -192,29 +192,29 @@ plot_trend_median <- ggplot(SRE_summ_quarterly_df,
               color = "black") +
   scale_x_continuous(breaks = x_breaks_share,
                      labels = x_labels_share) +
-  labs(x = "", y = "Median US bank's systematic risk exposure") +
+  labs(x = "", y = "Integration") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
 
 
 plot_trend_median_quants <- plot_trend_median +
+  geom_point(data = SRE_summ_quarterly_df,
+             mapping = aes(x = Quarters, y = Quant_75)) +
+  geom_line(data = SRE_summ_quarterly_df,
+            mapping = aes(x = Quarters, y = Quant_75), linetype = 'dotted') +
+  geom_point(data = SRE_summ_quarterly_df,
+             mapping = aes(x = Quarters, y = Quant_25)) +
+  geom_line(data = SRE_summ_quarterly_df,
+            mapping = aes(x = Quarters, y = Quant_25), linetype = 'dotted') 
   # geom_point(data = SRE_summ_quarterly_df, 
-  #            mapping = aes(x = Quarters, y = Quant_75)) +
+  #            mapping = aes(x = Quarters, y = Quant_95)) +
   # geom_line(data = SRE_summ_quarterly_df, 
-  #           mapping = aes(x = Quarters, y = Quant_75), linetype = 'dotted') +
+  #           mapping = aes(x = Quarters, y = Quant_95), linetype = 'dotted') +
   # geom_point(data = SRE_summ_quarterly_df, 
-  #            mapping = aes(x = Quarters, y = Quant_25)) +
+  #            mapping = aes(x = Quarters, y = Quant_5)) +
   # geom_line(data = SRE_summ_quarterly_df, 
-  #           mapping = aes(x = Quarters, y = Quant_25), linetype = 'dotted') +
-  geom_point(data = SRE_summ_quarterly_df, 
-             mapping = aes(x = Quarters, y = Quant_95)) +
-  geom_line(data = SRE_summ_quarterly_df, 
-            mapping = aes(x = Quarters, y = Quant_95), linetype = 'dotted') +
-  geom_point(data = SRE_summ_quarterly_df, 
-             mapping = aes(x = Quarters, y = Quant_5)) +
-  geom_line(data = SRE_summ_quarterly_df, 
-            mapping = aes(x = Quarters, y = Quant_5), linetype = 'dotted')
+  #           mapping = aes(x = Quarters, y = Quant_5), linetype = 'dotted')
 
 ###################################
 ###### SRE Boxplots ###############
@@ -356,7 +356,7 @@ plot_med_systemic <- ggplot(data_plot_med_sys,
   geom_line(mapping = aes(linetype = Medians)) +
   scale_x_continuous(breaks = x_breaks_share,
                      labels = x_labels_share) +
-  labs(x = "", y = "Median systemic and median US bank's SRE") +
+  labs(x = "", y = "Integration") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
@@ -389,7 +389,7 @@ plot_med_systemic_crises <- ggplot() +
   #             color = 'black') +
   scale_x_continuous(breaks = x_breaks_share,
                      labels = x_labels_share) +
-  labs(x = "", y = "Median systemic and median US bank's SRE") +
+  labs(x = "", y = "Integration") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
@@ -417,7 +417,7 @@ plot_med_H1H2 <- ggplot() +
               color = 'black') +
   scale_x_continuous(breaks = x_breaks_share,
                      labels = x_labels_share) +
-  labs(x = "", y = "Median US bank's SRE") +
+  labs(x = "", y = "Integration") +
   theme_bw() +
   theme(text = element_text(size = 20)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))

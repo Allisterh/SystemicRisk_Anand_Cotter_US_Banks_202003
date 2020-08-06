@@ -392,7 +392,7 @@ plot_med_t1t2_combined <- ggplot() +
             linetype = 'twodash') +
   geom_vline(xintercept = 71, linetype = 'dashed') +
   scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
-  labs(x = "", y = "Median banks' Tier 1 and 2 ratio (combined, in %)") +
+  labs(x = "", y = "Tier 1 and 2 ratio (combined, in %)") +
   theme_bw() +
   theme(text = element_text(size = 18)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
@@ -428,7 +428,7 @@ plot_med_com_eq_combined <- ggplot() +
             linetype = 'twodash') +
   geom_vline(xintercept = 71, linetype = 'dashed') +
   scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
-  labs(x = "", y = "Median banks' common equity ratio (combined, in %)") +
+  labs(x = "", y = "Common equity ratio (in %)") +
   theme_bw() +
   theme(text = element_text(size = 18)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1))
