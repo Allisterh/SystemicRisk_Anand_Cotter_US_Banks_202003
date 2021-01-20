@@ -800,14 +800,14 @@ mean_test_share_GREZ_ks <- ks.test(filter(nest_share_crises, GR == 1 | EZ == 1)$
 ############ Tests for mean reversion and distribution ##############
 #####################################################################
 
-test_SRE_adf <- tseries::adf.test(SRE_US_banks_long$SRE_2, alternative = 'stationary')
-test_SRE_KPSS <- tseries::kpss.test(SRE_US_banks_long$SRE_2, null = "Trend")
-
-hist_SRE_pool <- hist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0], 
-                      breaks = 100)
-plot_density_SRE_pool <- plot(density(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0]))
-normfit_SRE_pool <- fitdist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0],
-                                 'norm')
-plot_normfit <- normfit_SRE_pool %>% plot()
-
-
+# test_SRE_adf <- tseries::adf.test(SRE_US_banks_long$SRE_2, alternative = 'stationary')
+# test_SRE_KPSS <- tseries::kpss.test(SRE_US_banks_long$SRE_2, null = "Trend")
+# 
+# hist_SRE_pool <- hist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0], 
+#                       breaks = 100)
+# plot_density_SRE_pool <- plot(density(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0]))
+# normfit_SRE_pool <- fitdist(SRE_US_banks_long$SRE_2[SRE_US_banks_long$SRE_2 > 0],
+#                                  'norm')
+# plot_normfit <- normfit_SRE_pool %>% plot()
+# 
+# 
