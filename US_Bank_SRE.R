@@ -55,6 +55,8 @@ year_min <- 1993
 
 ### Filter CRSP data ###
 
+names(data_US_banks_daily) <- names(data_US_banks_daily) %>% tolower()
+
 # Calculate time needed to filter whole ~9 GB file
 time_pre_filter_CRSP <- Sys.time()
 # Filter banks with common shares post year_min and nominal price > 1
