@@ -343,6 +343,26 @@ func_attach_name <- function(df_1, vec)
 nest_quarter_pc_regression <- nest_quarter_pc_regression %>%
   dplyr::mutate('SRE_2' = purrr::map2(data_qtr_clean_2, SRE, func_attach_name))
 
+###############################################################################
+############### Adding quarterly volatility calculation #######################
+###############################################################################
+
+func_vol_qtr <- function(df)
+{
+  #This function accepts a dataframe whose columns are
+  #daily bank returns and rows correspond to quarters
+  #and returns a vector whose entries are quarterly 
+  #volatilities computed as sd(daily ret)*sqrt(days in quarter)
+  
+  vol_qtr <- (apply(df, 2, sd))*sqrt(nrow(df))
+  return(vol_qtr)
+}
+
+nest_quarter_pc_regression <- nest_quarter_pc_regression %>%
+  dplyr::mutate('vol_qtr' = purrr::map(data_qtr_clean_2, func_vol_qtr))
+
+###############################################################################
+
 func_pick_name <- function(vec_name) {return(names(vec_name))} #extract names
 
 # Unnest results in long format
