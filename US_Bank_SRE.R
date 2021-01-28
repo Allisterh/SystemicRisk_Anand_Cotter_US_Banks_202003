@@ -368,8 +368,8 @@ func_pick_name <- function(vec_name) {return(names(vec_name))} #extract names
 # Unnest results in long format
 SRE_US_banks_long <- nest_quarter_pc_regression %>%
   dplyr::mutate('Bank' = purrr::map(SRE_2, func_pick_name)) %>%
-  dplyr::select(Q_num, Bank, SRE_2) %>%
-  tidyr::unnest(.)
+  dplyr::select(Q_num, Bank, SRE_2, vol_qtr) %>%
+  tidyr::unnest(., cols = c(Bank, SRE_2, vol_qtr))
 
 # Spread in wide format
 SRE_US_banks_wide <- SRE_US_banks_long %>%
