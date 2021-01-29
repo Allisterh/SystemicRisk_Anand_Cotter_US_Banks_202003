@@ -68,7 +68,7 @@ data_US_banks_daily_2 <- data_US_banks_daily %>%
 
 time_post_filter_CRSP <- Sys.time()
 message("Filtered CRSP file. Time taken to filter file = ", 
-        round(time_post_filter_CRSP - time_pre_filter_CRSP, 2), " min")
+        round(time_post_filter_CRSP - time_pre_filter_CRSP, 2), "(sec/min)")
 
 # Remove from workspace, the (very) heavy original data file
 rm(data_US_banks_daily)
