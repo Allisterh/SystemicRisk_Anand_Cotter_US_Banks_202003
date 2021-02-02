@@ -184,12 +184,45 @@ vol_int_panel_H2_sys <- func_panel_est(formula = formula_vol_int,
                                                               Q_num >= 108/2))
 
 
+################################################
+########### Behavior During Crises #############
+################################################
 
+panel_data_vol_crises <- panel_data_vol %>%
+  dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(59, 65) ~ 1,
+                                        TRUE ~ 0),
+                'EZ' = dplyr::case_when(Q_num %in% seq(69, 77) ~ 1,
+                                        TRUE ~ 0),
+                'LTCM' = dplyr::case_when(Q_num %in% seq(21, 23) ~ 1,
+                                          TRUE ~ 0), 
+                'Dotcom' = dplyr::case_when(Q_num %in% seq(37, 39) ~ 1, 
+                                            TRUE ~ 0),
+                'Crises' = dplyr::case_when(GR == 1 | EZ == 1 | LTCM == 1 | Dotcom == 1 ~ 1,
+                                            TRUE ~ 0))
 
+### Panel regression during (any) crises ###
 
+panel_data_vol_crises_agg <- panel_data_vol_crises %>%
+  dplyr::filter(Crises == 1)
+panel_data_vol_crises_GR <- panel_data_vol_crises %>%
+  dplyr::filter(GR == 1)
+panel_data_vol_crises_EZ <- panel_data_vol_crises %>%
+  dplyr::filter(EZ == 1)
+panel_data_vol_crises_LTCM <- panel_data_vol_crises %>%
+  dplyr::filter(LTCM == 1)
+panel_data_vol_crises_Dotcom <- panel_data_vol_crises %>%
+  dplyr::filter(Dotcom == 1)
 
-
-
+vol_int_crises_agg <- func_panel_est(formula = formula_vol_int,
+                                     panel_data = panel_data_vol_crises_agg)
+vol_int_crises_GR <- func_panel_est(formula = formula_vol_int,
+                                     panel_data = panel_data_vol_crises_GR)
+vol_int_crises_EZ <- func_panel_est(formula = formula_vol_int,
+                                     panel_data = panel_data_vol_crises_EZ)
+vol_int_crises_LTCM <- func_panel_est(formula = formula_vol_int,
+                                     panel_data = panel_data_vol_crises_LTCM)
+vol_int_crises_Dotcom <- func_panel_est(formula = formula_vol_int,
+                                     panel_data = panel_data_vol_crises_Dotcom)
 
 
 
