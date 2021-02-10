@@ -111,13 +111,18 @@ panel_int_vol_full <- vol_int_bank_long %>%
 formula_vol_int <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + 
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
+panel_data_vol <- panel_int_vol_full %>%
+  dplyr::select(cusip_8, Q_num, vol_qtr, int_lag1, int_lag2, int_lag3, 
+                int_lag4, bank_size, t1_t2_ratio, npa_ratio, loss_prov_ratio,
+                com_eq_ratio)
+
+##################################################
+####### VOLATILITY REGRESSED ON INTEGRATION ######
+##################################################
+
 ###########################
 ### All banks full time ###
 ###########################
-
-panel_data_vol <- panel_int_vol_full %>%
-  dplyr::select(cusip_8, Q_num, vol_qtr, int_lag1, int_lag2, int_lag3, 
-                int_lag4, bank_size, t1_t2_ratio, npa_ratio, loss_prov_ratio)
 
 ### OLS = Pooling Panel Regression ###
 vol_int_ols <- plm::plm(formula_vol_int,
@@ -225,5 +230,44 @@ vol_int_crises_Dotcom <- func_panel_est(formula = formula_vol_int,
                                      panel_data = panel_data_vol_crises_Dotcom)
 
 
+#########################################################################
+####### VOLATILITY REGRESSED ON COMMON EQUITY-TO-INTEGRATION RATIO ######
+#########################################################################
 
+panel_data_vol_eq_int <- panel_data_vol %>%
+  dplyr::mutate('eq_int_ratio_lag1' = com_eq_ratio/int_lag1,
+                'eq_int_ratio_lag2' = com_eq_ratio/int_lag2,
+                'eq_int_ratio_lag3' = com_eq_ratio/int_lag3,
+                'eq_int_ratio_lag4' = com_eq_ratio/int_lag4)
 
+func_inf_to_NA_vec <- function(vec)
+{
+  # This function accepts a vector and converts 'Inf' entries
+  # to NA values and returns the vector
+  vec[is.infinite(vec)] <- NA
+  return(vec)
+}
+
+# Regression formula
+formula_vol_eq_int <- vol_qtr ~ eq_int_ratio_lag1 + eq_int_ratio_lag2 + eq_int_ratio_lag3 + 
+  eq_int_ratio_lag4 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+
+## Panel regression with bank and quarter fixed effects and double clustering ##
+#vol_eq_int_panel <- func_panel_est(formula = formula_vol_eq_int, 
+#                                panel_data = panel_data_vol_eq_int)
+
+###########################
+### All banks: Pre 2006 ###
+###########################
+
+#vol_eq_int_panel_H1 <- func_panel_est(formula = formula_vol_eq_int,
+#                                   panel_data = dplyr::filter(panel_data_vol_eq_int, 
+#                                                              Q_num < 108/2))
+
+############################
+### All banks: Post 2006 ###
+############################
+
+#vol_eq_int_panel_H2 <- func_panel_est(formula = formula_vol_eq_int,
+#                                   panel_data = dplyr::filter(panel_data_vol_eq_int, 
+#                                                              Q_num >= 108/2))
