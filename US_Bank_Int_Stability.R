@@ -235,39 +235,31 @@ vol_int_crises_Dotcom <- func_panel_est(formula = formula_vol_int,
 #########################################################################
 
 panel_data_vol_eq_int <- panel_data_vol %>%
-  dplyr::mutate('eq_int_ratio_lag1' = com_eq_ratio/int_lag1,
-                'eq_int_ratio_lag2' = com_eq_ratio/int_lag2,
-                'eq_int_ratio_lag3' = com_eq_ratio/int_lag3,
-                'eq_int_ratio_lag4' = com_eq_ratio/int_lag4)
-
-func_inf_to_NA_vec <- function(vec)
-{
-  # This function accepts a vector and converts 'Inf' entries
-  # to NA values and returns the vector
-  vec[is.infinite(vec)] <- NA
-  return(vec)
-}
+  dplyr::mutate('eq_int_ratio_lag1' = ifelse(int_lag1 == 0, NA, com_eq_ratio/int_lag1),
+                'eq_int_ratio_lag2' = ifelse(int_lag2 == 0, NA, com_eq_ratio/int_lag2),
+                'eq_int_ratio_lag3' = ifelse(int_lag3 == 0, NA, com_eq_ratio/int_lag3),
+                'eq_int_ratio_lag4' = ifelse(int_lag4 == 0, NA, com_eq_ratio/int_lag4))
 
 # Regression formula
 formula_vol_eq_int <- vol_qtr ~ eq_int_ratio_lag1 + eq_int_ratio_lag2 + eq_int_ratio_lag3 + 
   eq_int_ratio_lag4 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
 ## Panel regression with bank and quarter fixed effects and double clustering ##
-#vol_eq_int_panel <- func_panel_est(formula = formula_vol_eq_int, 
-#                                panel_data = panel_data_vol_eq_int)
+vol_eq_int_panel <- func_panel_est(formula = formula_vol_eq_int, 
+                                panel_data = panel_data_vol_eq_int)
 
 ###########################
 ### All banks: Pre 2006 ###
 ###########################
 
-#vol_eq_int_panel_H1 <- func_panel_est(formula = formula_vol_eq_int,
-#                                   panel_data = dplyr::filter(panel_data_vol_eq_int, 
-#                                                              Q_num < 108/2))
+vol_eq_int_panel_H1 <- func_panel_est(formula = formula_vol_eq_int,
+                                   panel_data = dplyr::filter(panel_data_vol_eq_int, 
+                                                              Q_num < 108/2))
 
 ############################
 ### All banks: Post 2006 ###
 ############################
 
-#vol_eq_int_panel_H2 <- func_panel_est(formula = formula_vol_eq_int,
-#                                   panel_data = dplyr::filter(panel_data_vol_eq_int, 
-#                                                              Q_num >= 108/2))
+vol_eq_int_panel_H2 <- func_panel_est(formula = formula_vol_eq_int,
+                                   panel_data = dplyr::filter(panel_data_vol_eq_int, 
+                                                              Q_num >= 108/2))
