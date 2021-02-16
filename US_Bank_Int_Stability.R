@@ -82,6 +82,9 @@ lag3_int_df <- func_lag_tib_wide(lag2_int_df)
 # Produce lag 4 SRE in wide format
 lag4_int_df <- func_lag_tib_wide(lag3_int_df)  
 
+# Produce lag 5 SRE in wide format
+lag5_int_df <- func_lag_tib_wide(lag4_int_df)  
+
 
 # Converting the wide formatted lags to long format
 lag1_int_long <- lag1_int_df %>%
@@ -96,12 +99,16 @@ lag3_int_long <- lag3_int_df %>%
 lag4_int_long <- lag4_int_df %>%
   tidyr::gather(-Q_num, key = 'Bank', value = 'int_lag4')
 
+lag5_int_long <- lag5_int_df %>%
+  tidyr::gather(-Q_num, key = 'Bank', value = 'int_lag5')
+
 # Arranging in a panel format
 panel_int_vol_full <- vol_int_bank_long %>%
   dplyr::left_join(., lag1_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag2_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag3_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag4_int_long, by = c('Bank', 'Q_num')) %>%
+  dplyr::left_join(., lag5_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., panel_SRE_full_2, by = c('cusip_8', 'Bank', 
                                                'Q_num', 'SRE_2')) %>%
   dplyr::arrange(., cusip_8)
@@ -111,10 +118,13 @@ panel_int_vol_full <- vol_int_bank_long %>%
 formula_vol_int <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + 
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
+formula_vol_int_2 <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 +
+  bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+
 panel_data_vol <- panel_int_vol_full %>%
   dplyr::select(cusip_8, Q_num, vol_qtr, int_lag1, int_lag2, int_lag3, 
-                int_lag4, bank_size, t1_t2_ratio, npa_ratio, loss_prov_ratio,
-                com_eq_ratio)
+                int_lag4, int_lag5, bank_size, t1_t2_ratio, npa_ratio, 
+                loss_prov_ratio, com_eq_ratio)
 
 ##################################################
 ####### VOLATILITY REGRESSED ON INTEGRATION ######
@@ -131,14 +141,14 @@ vol_int_ols <- plm::plm(formula_vol_int,
   summary(.)
 
 ## Panel regression with bank and quarter fixed effects and double clustering ##
-vol_int_panel <- func_panel_est(formula = formula_vol_int, 
+vol_int_panel <- func_panel_est(formula = formula_vol_int_2, 
                                 panel_data = panel_data_vol)
 
 ###########################
 ### All banks: Pre 2006 ###
 ###########################
 
-vol_int_panel_H1 <- func_panel_est(formula = formula_vol_int,
+vol_int_panel_H1 <- func_panel_est(formula = formula_vol_int_2,
                                    panel_data = dplyr::filter(panel_data_vol, 
                                                               Q_num < 108/2))
 
@@ -146,47 +156,81 @@ vol_int_panel_H1 <- func_panel_est(formula = formula_vol_int,
 ### All banks: Post 2006 ###
 ############################
 
-vol_int_panel_H2 <- func_panel_est(formula = formula_vol_int,
+vol_int_panel_H2 <- func_panel_est(formula = formula_vol_int_2,
                                    panel_data = dplyr::filter(panel_data_vol, 
                                                               Q_num >= 108/2))
 
+#################################
+### All banks: Pre Dodd-Frank ###
+#################################
+
+vol_int_panel_pre_DF <- func_panel_est(formula = formula_vol_int_2,
+                                   panel_data = dplyr::filter(panel_data_vol, 
+                                                              Q_num < 71))
+
+##################################
+### All banks: Post Dodd-Frank ###
+##################################
+
+vol_int_panel_post_DF <- func_panel_est(formula = formula_vol_int_2,
+                                   panel_data = dplyr::filter(panel_data_vol, 
+                                                              Q_num >= 71))
+
 ################################
-### Systemic banks full time ###
+### Large banks full time ######
 ################################
 
 # Redoing panel estimation for systemic banks
-panel_data_vol_sys_full <- vol_int_bank_long %>%
+panel_data_vol_large_full <- vol_int_bank_long %>%
   dplyr::left_join(., lag1_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag2_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag3_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag4_int_long, by = c('Bank', 'Q_num')) %>%
+  dplyr::left_join(., lag5_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::right_join(., panel_SRE_large_2019, by = c('cusip_8', 'Bank', 
                                                    'Q_num', 'SRE_2')) %>%
   dplyr::arrange(., cusip_8)
 
-panel_data_vol_sys <- panel_data_vol_sys_full %>%
+panel_data_vol_large <- panel_data_vol_large_full %>%
   dplyr::select(cusip_8, Q_num, vol_qtr, int_lag1, int_lag2, int_lag3, 
-                int_lag4, bank_size, t1_t2_ratio, npa_ratio, loss_prov_ratio)
+                int_lag4, int_lag5, bank_size, t1_t2_ratio, npa_ratio, 
+                loss_prov_ratio)
 
 ## Panel regression with bank and quarter fixed effects and double clustering ##
-vol_int_panel_sys <- func_panel_est(formula = formula_vol_int, 
-                                    panel_data = panel_data_vol_sys)
+vol_int_panel_large <- func_panel_est(formula = formula_vol_int_2, 
+                                    panel_data = panel_data_vol_large)
 
-###########################
-### Sys banks: Pre 2006 ###
-###########################
+#############################
+### Large banks: Pre 2006 ###
+#############################
 
-vol_int_panel_H1_sys <- func_panel_est(formula = formula_vol_int,
-                                   panel_data = dplyr::filter(panel_data_vol_sys, 
+vol_int_panel_H1_large <- func_panel_est(formula = formula_vol_int_2,
+                                   panel_data = dplyr::filter(panel_data_vol_large, 
                                                               Q_num < 108/2))
 
-############################
-### Sys banks: Post 2006 ###
-############################
+##############################
+### Large banks: Post 2006 ###
+##############################
 
-vol_int_panel_H2_sys <- func_panel_est(formula = formula_vol_int,
-                                   panel_data = dplyr::filter(panel_data_vol_sys, 
+vol_int_panel_H2_large <- func_panel_est(formula = formula_vol_int_2,
+                                   panel_data = dplyr::filter(panel_data_vol_large, 
                                                               Q_num >= 108/2))
+
+###################################
+### Large banks: Pre Dodd-Frank ###
+###################################
+
+vol_int_panel_large_pre_DF <- func_panel_est(formula = formula_vol_int_2,
+                                         panel_data = dplyr::filter(panel_data_vol_large, 
+                                                                    Q_num < 71))
+
+####################################
+### Large banks: Post Dodd-Frank ###
+####################################
+
+vol_int_panel_large_post_DF <- func_panel_est(formula = formula_vol_int_2,
+                                         panel_data = dplyr::filter(panel_data_vol_large, 
+                                                                    Q_num >= 71))
 
 
 ################################################
@@ -238,21 +282,25 @@ panel_data_vol_eq_int <- panel_data_vol %>%
   dplyr::mutate('eq_int_ratio_lag1' = ifelse(int_lag1 == 0, NA, com_eq_ratio/int_lag1),
                 'eq_int_ratio_lag2' = ifelse(int_lag2 == 0, NA, com_eq_ratio/int_lag2),
                 'eq_int_ratio_lag3' = ifelse(int_lag3 == 0, NA, com_eq_ratio/int_lag3),
-                'eq_int_ratio_lag4' = ifelse(int_lag4 == 0, NA, com_eq_ratio/int_lag4))
+                'eq_int_ratio_lag4' = ifelse(int_lag4 == 0, NA, com_eq_ratio/int_lag4),
+                'eq_int_ratio_lag5' = ifelse(int_lag5 == 0, NA, com_eq_ratio/int_lag5))
 
 # Regression formula
 formula_vol_eq_int <- vol_qtr ~ eq_int_ratio_lag1 + eq_int_ratio_lag2 + eq_int_ratio_lag3 + 
   eq_int_ratio_lag4 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
+formula_vol_eq_int_2 <- vol_qtr ~ eq_int_ratio_lag1 + eq_int_ratio_lag2 + eq_int_ratio_lag3 + 
+  eq_int_ratio_lag4 + eq_int_ratio_lag5 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+
 ## Panel regression with bank and quarter fixed effects and double clustering ##
-vol_eq_int_panel <- func_panel_est(formula = formula_vol_eq_int, 
+vol_eq_int_panel <- func_panel_est(formula = formula_vol_eq_int_2, 
                                 panel_data = panel_data_vol_eq_int)
 
 ###########################
 ### All banks: Pre 2006 ###
 ###########################
 
-vol_eq_int_panel_H1 <- func_panel_est(formula = formula_vol_eq_int,
+vol_eq_int_panel_H1 <- func_panel_est(formula = formula_vol_eq_int_2,
                                    panel_data = dplyr::filter(panel_data_vol_eq_int, 
                                                               Q_num < 108/2))
 
@@ -260,6 +308,82 @@ vol_eq_int_panel_H1 <- func_panel_est(formula = formula_vol_eq_int,
 ### All banks: Post 2006 ###
 ############################
 
-vol_eq_int_panel_H2 <- func_panel_est(formula = formula_vol_eq_int,
+vol_eq_int_panel_H2 <- func_panel_est(formula = formula_vol_eq_int_2,
                                    panel_data = dplyr::filter(panel_data_vol_eq_int, 
                                                               Q_num >= 108/2))
+
+#################################
+### All banks: Pre Dodd-Frank ###
+#################################
+
+vol_eq_int_panel_pre_DF <- func_panel_est(formula = formula_vol_eq_int_2,
+                                      panel_data = dplyr::filter(panel_data_vol_eq_int, 
+                                                                 Q_num < 71))
+
+##################################
+### All banks: Post Dodd-Frank ###
+##################################
+
+vol_eq_int_panel_post_DF <- func_panel_est(formula = formula_vol_eq_int_2,
+                                      panel_data = dplyr::filter(panel_data_vol_eq_int, 
+                                                                 Q_num >= 71))
+
+#################################
+#### Large banks: full time #####
+#################################
+
+panel_data_vol_eq_int_large <- panel_data_vol_eq_int %>%
+  dplyr::filter(cusip_8 %in% cusip_large_2019$cusip_8)
+
+vol_eq_int_panel_large <- func_panel_est(formula = formula_vol_eq_int_2,
+                                         panel_data = panel_data_vol_eq_int_large)
+
+### Pre 2006 ###
+vol_eq_int_panel_large_H1 <- func_panel_est(formula = formula_vol_eq_int_2,
+                                         panel_data = dplyr::filter(panel_data_vol_eq_int_large,
+                                                                    Q_num < 108/2))
+
+### Post 2006 ###
+vol_eq_int_panel_large_H2 <- func_panel_est(formula = formula_vol_eq_int_2,
+                                         panel_data = dplyr::filter(panel_data_vol_eq_int_large,
+                                                                    Q_num >= 108/2))
+
+### Pre Dodd-Frank ###
+vol_eq_int_panel_large_pre_DF <- func_panel_est(formula = formula_vol_eq_int_2,
+                                            panel_data = dplyr::filter(panel_data_vol_eq_int_large,
+                                                                       Q_num < 71))
+
+### Post Dodd-Frank ###
+vol_eq_int_panel_large_post_DF <- func_panel_est(formula = formula_vol_eq_int_2,
+                                            panel_data = dplyr::filter(panel_data_vol_eq_int_large,
+                                                                       Q_num >= 71))
+
+
+####################################
+#### Systemic banks: full time #####
+####################################
+
+# Full
+vol_eq_int_panel_sys <- func_panel_est(formula = formula_vol_eq_int_2,
+                                       panel_data = dplyr::filter(panel_data_vol_eq_int,
+                                                                  cusip_8 %in% bank_cusip_sys$cusip_8))
+# Pre 2006
+vol_eq_int_panel_sys_H1 <- func_panel_est(formula = formula_vol_eq_int_2,
+                                       panel_data = dplyr::filter(panel_data_vol_eq_int,
+                                                                  cusip_8 %in% bank_cusip_sys$cusip_8 &
+                                                                    Q_num < 108/2))
+# Post 2006
+vol_eq_int_panel_sys_H2 <- func_panel_est(formula = formula_vol_eq_int_2,
+                                          panel_data = dplyr::filter(panel_data_vol_eq_int,
+                                                                     cusip_8 %in% bank_cusip_sys$cusip_8 &
+                                                                       Q_num >= 108/2))
+# Pre Dodd-Frank
+vol_eq_int_panel_sys_pre_DF <- func_panel_est(formula = formula_vol_eq_int_2,
+                                          panel_data = dplyr::filter(panel_data_vol_eq_int,
+                                                                     cusip_8 %in% bank_cusip_sys$cusip_8 &
+                                                                       Q_num < 71))
+# Post Dodd-Frank
+vol_eq_int_panel_sys_post_DF <- func_panel_est(formula = formula_vol_eq_int_2,
+                                              panel_data = dplyr::filter(panel_data_vol_eq_int,
+                                                                         cusip_8 %in% bank_cusip_sys$cusip_8 &
+                                                                           Q_num >= 71))
