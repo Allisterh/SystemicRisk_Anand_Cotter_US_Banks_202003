@@ -262,20 +262,21 @@ panel_data_vol_crises_LTCM <- panel_data_vol_crises %>%
 panel_data_vol_crises_Dotcom <- panel_data_vol_crises %>%
   dplyr::filter(Dotcom == 1)
 
-vol_int_crises_agg <- func_panel_est(formula = formula_vol_int,
+vol_int_crises_agg <- func_panel_est(formula = formula_vol_int_2,
                                      panel_data = panel_data_vol_crises_agg)
-vol_int_crises_GR <- func_panel_est(formula = formula_vol_int,
+vol_int_crises_GR <- func_panel_est(formula = formula_vol_int_2,
                                      panel_data = panel_data_vol_crises_GR)
-vol_int_crises_EZ <- func_panel_est(formula = formula_vol_int,
+vol_int_crises_EZ <- func_panel_est(formula = formula_vol_int_2,
                                      panel_data = panel_data_vol_crises_EZ)
-vol_int_crises_LTCM <- func_panel_est(formula = formula_vol_int,
+vol_int_crises_LTCM <- func_panel_est(formula = formula_vol_int_2,
                                      panel_data = panel_data_vol_crises_LTCM)
-vol_int_crises_Dotcom <- func_panel_est(formula = formula_vol_int,
+vol_int_crises_Dotcom <- func_panel_est(formula = formula_vol_int_2,
                                      panel_data = panel_data_vol_crises_Dotcom)
 
-
+#########################################################################
 #########################################################################
 ####### VOLATILITY REGRESSED ON COMMON EQUITY-TO-INTEGRATION RATIO ######
+#########################################################################
 #########################################################################
 
 panel_data_vol_eq_int <- panel_data_vol %>%
@@ -387,3 +388,40 @@ vol_eq_int_panel_sys_post_DF <- func_panel_est(formula = formula_vol_eq_int_2,
                                               panel_data = dplyr::filter(panel_data_vol_eq_int,
                                                                          cusip_8 %in% bank_cusip_sys$cusip_8 &
                                                                            Q_num >= 71))
+
+#####################################
+####### Crisis episodes #############
+#####################################
+
+panel_data_vol_eq_int_crises <- panel_data_vol_eq_int %>%
+  dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(59, 65) ~ 1,
+                                        TRUE ~ 0),
+                'EZ' = dplyr::case_when(Q_num %in% seq(69, 77) ~ 1,
+                                        TRUE ~ 0),
+                'LTCM' = dplyr::case_when(Q_num %in% seq(21, 23) ~ 1,
+                                          TRUE ~ 0), 
+                'Dotcom' = dplyr::case_when(Q_num %in% seq(37, 39) ~ 1, 
+                                            TRUE ~ 0),
+                'Crises' = dplyr::case_when(GR == 1 | EZ == 1 | LTCM == 1 | Dotcom == 1 ~ 1,
+                                            TRUE ~ 0))
+
+vol_eq_int_crises_agg <- func_panel_est(formula = formula_vol_eq_int_2,
+                                     panel_data = dplyr::filter(panel_data_vol_eq_int_crises,
+                                                                Crises == 1))
+
+vol_eq_int_crises_GR <- func_panel_est(formula = formula_vol_eq_int_2,
+                                        panel_data = dplyr::filter(panel_data_vol_eq_int_crises,
+                                                                   GR == 1))
+
+vol_eq_int_crises_EZ <- func_panel_est(formula = formula_vol_eq_int_2,
+                                        panel_data = dplyr::filter(panel_data_vol_eq_int_crises,
+                                                                   EZ == 1))
+
+vol_eq_int_crises_LTCM <- func_panel_est(formula = formula_vol_eq_int_2,
+                                        panel_data = dplyr::filter(panel_data_vol_eq_int_crises,
+                                                                   LTCM == 1))
+
+vol_eq_int_crises_Dotcom <- func_panel_est(formula = formula_vol_eq_int_2,
+                                        panel_data = dplyr::filter(panel_data_vol_eq_int_crises,
+                                                                   Dotcom == 1))
+
