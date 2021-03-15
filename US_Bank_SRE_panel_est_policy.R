@@ -36,7 +36,7 @@ data_Cstat_expl <- data_US_banks_quarterly %>%
                 fhlbq, loq, mbshsq, mtgiq, niintq, 
                 npatq, tdomdq, teqq,
                 dd1q, dibq, ireoq,
-                olbmq, ltmibq)
+                olbmq, ltmibq, niq)
 
 # Renaming for clarity
 data_Cstat_expl_2 <- data_Cstat_expl %>%
@@ -63,7 +63,8 @@ data_Cstat_expl_2 <- data_Cstat_expl %>%
                 'net_interest_income' = niintq,
                 'total_non_performing_assets'= npatq,
                 'long_term_debt_due_1_yr' = dd1q,
-                'loss_provision' = pllq)
+                'loss_provision' = pllq) %>%
+  dplyr::mutate('net_income' = -niq)
 
 # Summarizing 
 table_summary_expl <- apply(data_Cstat_expl_2[, -c(1:7, 15:16, 18)], 
@@ -80,7 +81,7 @@ data_Cstat_expl_3 <- data_Cstat_expl_2 %>%
                 debt_in_curr_liab, common_stock,
                 total_noninterest_income, cash_div_common_stock,
                 total_non_performing_assets, net_interest_margin,
-                T1_T2_comb_ratio, loss_provision)
+                T1_T2_comb_ratio, loss_provision, net_income)
 
 
 func_log10 <- function(vec)
@@ -107,10 +108,11 @@ data_Cstat_expl_4 <- data_Cstat_expl_3 %>%
                 'npa_ratio' = 100*(total_non_performing_assets/total_assets),
                 'net_int_margin' = net_interest_margin,
                 't1_t2_ratio' = T1_T2_comb_ratio,
-                'loss_prov_ratio' = 100*(loss_provision/total_assets))
+                'loss_prov_ratio' = 100*(loss_provision/total_assets),
+                'roa' = net_income/total_assets)
 
 data_Cstat_panel <- data_Cstat_expl_4 %>%
-  dplyr::select(gvkey:conm, bank_size:loss_prov_ratio)
+  dplyr::select(gvkey:conm, bank_size:roa)
 
 #### 8-digit cusip column for matching ####
 
