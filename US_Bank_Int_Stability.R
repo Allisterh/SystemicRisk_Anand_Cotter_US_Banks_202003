@@ -425,3 +425,107 @@ vol_eq_int_crises_Dotcom <- func_panel_est(formula = formula_vol_eq_int_2,
                                         panel_data = dplyr::filter(panel_data_vol_eq_int_crises,
                                                                    Dotcom == 1))
 
+#######################################################################
+######### TED SPREAD AND VIX BULL-BEAR ANALYSIS #######################
+#######################################################################
+
+### TED SPREAD ###
+
+ted_spread <- readr::read_csv('TEDRATE.csv', na = '.') %>%
+  dplyr::mutate('year' = lubridate::year(DATE), 
+                'month' = lubridate::month(DATE),
+                'day' = lubridate::day(DATE),
+                'quarter' = lubridate::quarter(DATE)) %>%
+  dplyr::filter(year >= year_min & year <= year_max) %>%
+  dplyr::mutate('Q_num' = 4*(year - (year_min - 1) - 1) + quarter) 
+
+# Quarterly TED
+ted_spread_quarter <- ted_spread %>%
+  dplyr::filter((month == 3 & day == 31) | 
+                  (month == 6 & day == 30) |
+                  (month == 9 & day == 30) |
+                  (month == 12 & day == 31))
+
+# Bull-Bear classification
+ted_spread_quarter <- ted_spread_quarter %>%
+  dplyr::mutate('bull_bear_TED' = dplyr::case_when(TEDRATE <= quantile(TEDRATE, 0.25, na.rm = T) ~ 'L',
+                                               TEDRATE >= quantile(TEDRATE, 0.75, na.rm = T) ~ 'H',
+                                               TRUE ~ 'M'))
+
+ted_bull_bear <- ted_spread_quarter %>%
+  dplyr::select(Q_num, bull_bear_TED)
+
+### VIX ###
+
+vix <- readr::read_csv('VIXCLS.csv', na = '.') %>%
+  dplyr::mutate('year' = lubridate::year(DATE), 
+                'month' = lubridate::month(DATE),
+                'day' = lubridate::day(DATE),
+                'quarter' = lubridate::quarter(DATE)) %>%
+  dplyr::filter(year >= year_min & year <= year_max) %>%
+  dplyr::mutate('Q_num' = 4*(year - (year_min - 1) - 1) + quarter) 
+
+# Quarterly VIX
+vix_quarter <- vix %>%
+  dplyr::filter((month == 3 & day == 31) | 
+                  (month == 6 & day == 30) |
+                  (month == 9 & day == 30) |
+                  (month == 12 & day == 31))
+
+# Bull-Bear classification
+vix_quarter <- vix_quarter %>%
+  dplyr::mutate('bull_bear_VIX' = dplyr::case_when(VIXCLS <= quantile(VIXCLS, 0.25, na.rm = T) ~ 'L',
+                                                   VIXCLS >= quantile(VIXCLS, 0.75, na.rm = T) ~ 'H',
+                                                   TRUE ~ 'M'))
+
+vix_bull_bear <- vix_quarter %>%
+  dplyr::select(Q_num, bull_bear_VIX)
+
+## Joining TED and VIX bull bear series ##
+
+bull_bear_TED_VIX <- ted_bull_bear %>%
+  dplyr::full_join(., vix_bull_bear, by = 'Q_num')
+
+#########################################################################
+### Panel regression of bank vol on bank integration during bull bear ###
+#########################################################################
+
+panel_data_vol_bear_bull <- panel_data_vol %>%
+  dplyr::left_join(., bull_bear_TED_VIX, by = 'Q_num')
+
+## TED bear
+vol_int_panel_TED_bear <- func_panel_est(formula = formula_vol_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_bear_bull, 
+                                                                    bull_bear_TED == 'L'))
+## TED bull
+vol_int_panel_TED_bull <- func_panel_est(formula = formula_vol_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_bear_bull, 
+                                                                    bull_bear_TED == 'H'))
+## VIX bear
+vol_int_panel_VIX_bear <- func_panel_est(formula = formula_vol_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_bear_bull, 
+                                                                    bull_bear_VIX == 'L'))
+## VIX bull
+vol_int_panel_VIX_bull <- func_panel_est(formula = formula_vol_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_bear_bull, 
+                                                                    bull_bear_VIX == 'H'))
+################################
+#### Subsample: Large Banks ####
+################################
+
+## TED bear 
+vol_int_panel_TED_bear_large <- func_panel_est(formula_vol_int_2, 
+                                               dplyr::filter(panel_data_vol_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_TED == 'L'))
+## TED bull 
+vol_int_panel_TED_bull_large <- func_panel_est(formula_vol_int_2, 
+                                               dplyr::filter(panel_data_vol_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_TED == 'H'))
+## VIX bear 
+vol_int_panel_VIX_bear_large <- func_panel_est(formula_vol_int_2, 
+                                               dplyr::filter(panel_data_vol_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_VIX == 'L'))
+## VIX bull 
+vol_int_panel_VIX_bull_large <- func_panel_est(formula_vol_int_2, 
+                                               dplyr::filter(panel_data_vol_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_VIX == 'L'))
