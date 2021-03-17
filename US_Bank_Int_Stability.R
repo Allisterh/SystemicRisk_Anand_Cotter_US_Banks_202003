@@ -528,4 +528,48 @@ vol_int_panel_VIX_bear_large <- func_panel_est(formula_vol_int_2,
 ## VIX bull 
 vol_int_panel_VIX_bull_large <- func_panel_est(formula_vol_int_2, 
                                                dplyr::filter(panel_data_vol_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_VIX == 'H'))
+
+###################################################################################
+### Panel regression of bank vol on bank equity-to-integration during bull bear ###
+###################################################################################
+
+panel_data_vol_eq_int_bear_bull <- panel_data_vol_eq_int %>%
+  dplyr::left_join(., bull_bear_TED_VIX, by = 'Q_num')
+
+## TED bear
+vol_eq_int_panel_TED_bear <- func_panel_est(formula = formula_vol_eq_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_eq_int_bear_bull, 
+                                                                    bull_bear_TED == 'L'))
+## TED bull
+vol_eq_int_panel_TED_bull <- func_panel_est(formula = formula_vol_eq_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_eq_int_bear_bull, 
+                                                                    bull_bear_TED == 'H'))
+## VIX bear
+vol_eq_int_panel_VIX_bear <- func_panel_est(formula = formula_vol_eq_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_eq_int_bear_bull, 
+                                                                    bull_bear_VIX == 'L'))
+## VIX bull
+vol_eq_int_panel_VIX_bull <- func_panel_est(formula = formula_vol_eq_int_2, 
+                                         panel_data = dplyr::filter(panel_data_vol_eq_int_bear_bull, 
+                                                                    bull_bear_VIX == 'H'))
+################################
+#### Subsample: Large Banks ####
+################################
+
+## TED bear 
+vol_eq_int_panel_TED_bear_large <- func_panel_est(formula_vol_eq_int_2, 
+                                               dplyr::filter(panel_data_vol_eq_int_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_TED == 'L'))
+## TED bull 
+vol_eq_int_panel_TED_bull_large <- func_panel_est(formula_vol_eq_int_2, 
+                                               dplyr::filter(panel_data_vol_eq_int_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_TED == 'H'))
+## VIX bear 
+vol_eq_int_panel_VIX_bear_large <- func_panel_est(formula_vol_eq_int_2, 
+                                               dplyr::filter(panel_data_vol_eq_int_bear_bull, 
                                                              cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_VIX == 'L'))
+## VIX bull 
+vol_eq_int_panel_VIX_bull_large <- func_panel_est(formula_vol_eq_int_2, 
+                                               dplyr::filter(panel_data_vol_eq_int_bear_bull, 
+                                                             cusip_8 %in% cusip_large_2019$cusip_8 & bull_bear_VIX == 'H'))
