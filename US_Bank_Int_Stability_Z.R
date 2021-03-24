@@ -170,3 +170,107 @@ Z_int_panel_cries_LTCM <- func_panel_est(formula_Z_int,
 Z_int_panel_cries_dotcom <- func_panel_est(formula_Z_int,
                                         dplyr::filter(panel_data_Z_int_crises, 
                                                       Dotcom == 1))
+
+##############################################
+######## Large banks subsample ###############
+##############################################
+
+### All crises ###
+
+Z_int_panel_cries_agg_large <- func_panel_est(formula_Z_int,
+                                        dplyr::filter(panel_data_Z_int_crises, 
+                                                      Crises == 1 & 
+                                                        cusip_8 %in% cusip_large_2019$cusip_8))
+
+### GR ###
+
+Z_int_panel_cries_GR_large <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_crises, 
+                                                     GR == 1 & 
+                                                       cusip_8 %in% cusip_large_2019$cusip_8))
+
+### EZ ###
+
+Z_int_panel_cries_EZ_large <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_crises, 
+                                                     EZ == 1 & 
+                                                       cusip_8 %in% cusip_large_2019$cusip_8))
+
+### LTCM ###
+
+Z_int_panel_cries_LTCM_large <- func_panel_est(formula_Z_int,
+                                         dplyr::filter(panel_data_Z_int_crises, 
+                                                       LTCM == 1 & 
+                                                         cusip_8 %in% cusip_large_2019$cusip_8))
+
+### Dotcom ###
+Z_int_panel_cries_dotcom_large <- func_panel_est(formula_Z_int,
+                                           dplyr::filter(panel_data_Z_int_crises, 
+                                                         Dotcom == 1 & 
+                                                           cusip_8 %in% cusip_large_2019$cusip_8))
+
+
+
+
+#################################
+##### Bull and Bear TED VIX #####
+#################################
+
+panel_data_Z_int_bear_bull <- panel_data_Z_int %>%
+  dplyr::left_join(., bull_bear_TED_VIX, by = 'Q_num')
+
+### TED bear ###
+
+Z_int_panel_TED_bear <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_TED == 'L'))
+
+### TED bull ###
+
+Z_int_panel_TED_bull <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_TED == 'H'))
+
+### VIX bear ###
+
+Z_int_panel_VIX_bear <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_VIX == 'L'))
+
+### VIX bull ###
+
+Z_int_panel_VIX_bull <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_VIX == 'H'))
+
+#################################################################
+################# Large Banks subsample #########################
+#################################################################
+
+### TED bear ###
+
+Z_int_panel_TED_bear_large <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_TED == 'L' &
+                                                       cusip_8 %in% cusip_large_2019$cusip_8))
+
+### TED bull ###
+
+Z_int_panel_TED_bull_large <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_TED == 'H' &
+                                                       cusip_8 %in% cusip_large_2019$cusip_8))
+
+### VIX bear ###
+
+Z_int_panel_VIX_bear_large <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_VIX == 'L' &
+                                                       cusip_8 %in% cusip_large_2019$cusip_8))
+
+### VIX bull ###
+
+Z_int_panel_VIX_bull_large <- func_panel_est(formula_Z_int,
+                                       dplyr::filter(panel_data_Z_int_bear_bull,
+                                                     bull_bear_VIX == 'H'&
+                                                       cusip_8 %in% cusip_large_2019$cusip_8))
