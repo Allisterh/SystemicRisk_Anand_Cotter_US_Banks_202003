@@ -25,7 +25,7 @@ panel_Z <- panel_SRE_full_2 %>%
   dplyr::mutate('Z_num' = com_eq_ratio/100 + roa)
 
 # Minimum quarterly observations needed for computing Z denominator
-num_obs_Z <- 30
+num_obs_Z <- 20
 
 panel_Z_nest <- panel_Z %>%
   dplyr::select(cusip_8, Q_num, roa) %>%
@@ -35,14 +35,14 @@ panel_Z_nest <- panel_Z %>%
   dplyr::filter(nobs >= num_obs_Z)
 
 # Function to calculate rolling standard deviation of ROA
-func_sd_roll <- function(df, window = 12)
+func_sd_roll <- function(df, window = 8)
 {
   # This function accepts a dataframe with first column as Quarter Numbers
   # and second column as ROA; and returns a vector with rolling standard 
   # deviations for ROA of length = window parameter
   
   df_2 <- df %>% dplyr::arrange(., Q_num) #Arrange in order of Q_num
-  z_num <- c(rep(NA, nrow(df_2))) #Initialize the numerator as vector of NA
+  z_den <- c(rep(NA, nrow(df_2))) #Initialize the denominator as vector of NA
   q <- df_2$Q_num #Isolate quarter numbers
   
   for (i in 1:(nrow(df_2)-window+1))
@@ -50,25 +50,123 @@ func_sd_roll <- function(df, window = 12)
     # Isolate the part relevant for computing the rolling sd
     df_3 <- dplyr::filter(df_2, Q_num %in% q[i]:q[i+window-1])
     
-    z_num[i+window-1] = sd(df_3$roa, na.rm = T) #Compute rolling sd for ROA
+    z_den[i+window-1] = sd(df_3$roa, na.rm = T) #Compute rolling sd for ROA
   }
   
-  return(z_num)
+  return(z_den)
 }
 
 # Append the Z score denominator as a new column
 panel_Z_nest <- panel_Z_nest %>%
-  dplyr::mutate('Z_den' = purrr::map(data, func_sd_roll))
+  dplyr::mutate('Q_num' = purrr::map(data, function(df){return(df$Q_num)}), 
+                'Z_den' = purrr::map(data, func_sd_roll))
 
 # Z score denominator
 panel_Z_den <- panel_Z_nest %>%
-  dplyr::select(cusip_8, Z_den) %>%
-  tidyr::unnest(., cols = Z_den)
+  dplyr::select(cusip_8, Q_num, Z_den) %>%
+  tidyr::unnest(., cols = c('Q_num', 'Z_den'))
 
 # Joining with the panel with Z numerator
 panel_Z <- panel_Z %>%
-  dplyr::left_join(., panel_Z_den, by = 'cusip_8') %>%
+  dplyr::left_join(., panel_Z_den, by = c('cusip_8', 'Q_num')) %>%
   dplyr::mutate('Z_score' = Z_num/Z_den)
 
+#######################################################################
+##### Ready for panel regression of Z scores on integration lags ######
+#######################################################################
+
+# Select relevant variables
+panel_data_Z_int <- panel_Z %>%
+  dplyr::select(., cusip_8, Q_num, Z_score, bank_size, t1_t2_ratio, npa_ratio,
+                loss_prov_ratio, com_eq_ratio) 
+
+# Join panel data with the lags of quarterly bank integration
+panel_data_Z_int <- panel_data_Z_int %>%
+  dplyr::left_join(., panel_data_vol, by = c('cusip_8', 'Q_num', 'bank_size', 
+                                             't1_t2_ratio', 'npa_ratio', 
+                                             'loss_prov_ratio', 'com_eq_ratio'))
+
+# Formula for regression
 formula_Z_int <- Z_score ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 + 
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+
+### All banks, full duration ###
+
+Z_int_panel <- func_panel_est(formula_Z_int, panel_data_Z_int)
+
+### All banks, pre Dodd-Frank ###
+
+Z_int_panel_pre_DF <- func_panel_est(formula_Z_int,
+                                     dplyr::filter(panel_data_Z_int, Q_num < 71))
+
+### All banks, post Dodd-Frank ###
+
+Z_int_panel_post_DF <- func_panel_est(formula_Z_int,
+                                     dplyr::filter(panel_data_Z_int, Q_num >= 71))
+
+
+### Large banks, full duration ###
+
+Z_int_panel_large <- func_panel_est(formula_Z_int, 
+                                    dplyr::filter(panel_data_Z_int, 
+                                                  cusip_8 %in% cusip_large_2019$cusip_8))
+
+
+### Large banks, pre Dodd-Frank ###
+
+Z_int_panel_large_pre_DF <- func_panel_est(formula_Z_int, 
+                                    dplyr::filter(panel_data_Z_int, 
+                                                  cusip_8 %in% cusip_large_2019$cusip_8 &
+                                                    Q_num < 71))
+
+### Large banks, post Dodd-Frank ###
+
+Z_int_panel_large_post_DF <- func_panel_est(formula_Z_int, 
+                                    dplyr::filter(panel_data_Z_int, 
+                                                  cusip_8 %in% cusip_large_2019$cusip_8 &
+                                                    Q_num >= 71))
+
+#####################################################
+##### Behavior During Crises ########################
+#####################################################
+
+panel_data_Z_int_crises <- panel_data_Z_int %>%
+  dplyr::mutate('GR' = dplyr::case_when(Q_num %in% seq(59, 65) ~ 1,
+                                        TRUE ~ 0),
+                'EZ' = dplyr::case_when(Q_num %in% seq(69, 77) ~ 1,
+                                        TRUE ~ 0),
+                'LTCM' = dplyr::case_when(Q_num %in% seq(21, 23) ~ 1,
+                                          TRUE ~ 0), 
+                'Dotcom' = dplyr::case_when(Q_num %in% seq(37, 39) ~ 1, 
+                                            TRUE ~ 0),
+                'Crises' = dplyr::case_when(GR == 1 | EZ == 1 | LTCM == 1 | Dotcom == 1 ~ 1,
+                                            TRUE ~ 0))
+
+### All crises ###
+
+Z_int_panel_cries_agg <- func_panel_est(formula_Z_int,
+                                        dplyr::filter(panel_data_Z_int_crises, 
+                                                      Crises == 1))
+
+### GR ###
+
+Z_int_panel_cries_GR <- func_panel_est(formula_Z_int,
+                                        dplyr::filter(panel_data_Z_int_crises, 
+                                                      GR == 1))
+
+### EZ ###
+
+Z_int_panel_cries_EZ <- func_panel_est(formula_Z_int,
+                                        dplyr::filter(panel_data_Z_int_crises, 
+                                                      EZ == 1))
+
+### LTCM ###
+
+Z_int_panel_cries_LTCM <- func_panel_est(formula_Z_int,
+                                        dplyr::filter(panel_data_Z_int_crises, 
+                                                      LTCM == 1))
+
+### Dotcom ###
+Z_int_panel_cries_dotcom <- func_panel_est(formula_Z_int,
+                                        dplyr::filter(panel_data_Z_int_crises, 
+                                                      Dotcom == 1))
