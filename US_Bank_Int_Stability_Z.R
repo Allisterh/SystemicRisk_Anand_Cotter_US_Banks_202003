@@ -58,4 +58,17 @@ func_sd_roll <- function(df, window = 12)
 
 # Append the Z score denominator as a new column
 panel_Z_nest <- panel_Z_nest %>%
-  dplyr::mutate('Z_den' = purrr:map(data, func_sd_roll))
+  dplyr::mutate('Z_den' = purrr::map(data, func_sd_roll))
+
+# Z score denominator
+panel_Z_den <- panel_Z_nest %>%
+  dplyr::select(cusip_8, Z_den) %>%
+  tidyr::unnest(., cols = Z_den)
+
+# Joining with the panel with Z numerator
+panel_Z <- panel_Z %>%
+  dplyr::left_join(., panel_Z_den, by = 'cusip_8') %>%
+  dplyr::mutate('Z_score' = Z_num/Z_den)
+
+formula_Z_int <- Z_score ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 + 
+  bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
