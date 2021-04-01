@@ -25,7 +25,7 @@ panel_Z <- panel_SRE_full_2 %>%
   dplyr::mutate('Z_num' = com_eq_ratio/100 + roa)
 
 # Minimum quarterly observations needed for computing Z denominator
-num_obs_Z <- 20
+num_obs_Z <- 30
 
 panel_Z_nest <- panel_Z %>%
   dplyr::select(cusip_8, Q_num, roa) %>%
@@ -144,30 +144,30 @@ panel_data_Z_int_crises <- panel_data_Z_int %>%
 
 ### All crises ###
 
-Z_int_panel_cries_agg <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_agg <- func_panel_est(formula_Z_int,
                                         dplyr::filter(panel_data_Z_int_crises, 
                                                       Crises == 1))
 
 ### GR ###
 
-Z_int_panel_cries_GR <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_GR <- func_panel_est(formula_Z_int,
                                         dplyr::filter(panel_data_Z_int_crises, 
                                                       GR == 1))
 
 ### EZ ###
 
-Z_int_panel_cries_EZ <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_EZ <- func_panel_est(formula_Z_int,
                                         dplyr::filter(panel_data_Z_int_crises, 
                                                       EZ == 1))
 
 ### LTCM ###
 
-Z_int_panel_cries_LTCM <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_LTCM <- func_panel_est(formula_Z_int,
                                         dplyr::filter(panel_data_Z_int_crises, 
                                                       LTCM == 1))
 
 ### Dotcom ###
-Z_int_panel_cries_dotcom <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_dotcom <- func_panel_est(formula_Z_int,
                                         dplyr::filter(panel_data_Z_int_crises, 
                                                       Dotcom == 1))
 
@@ -177,34 +177,34 @@ Z_int_panel_cries_dotcom <- func_panel_est(formula_Z_int,
 
 ### All crises ###
 
-Z_int_panel_cries_agg_large <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_agg_large <- func_panel_est(formula_Z_int,
                                         dplyr::filter(panel_data_Z_int_crises, 
                                                       Crises == 1 & 
                                                         cusip_8 %in% cusip_large_2019$cusip_8))
 
 ### GR ###
 
-Z_int_panel_cries_GR_large <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_GR_large <- func_panel_est(formula_Z_int,
                                        dplyr::filter(panel_data_Z_int_crises, 
                                                      GR == 1 & 
                                                        cusip_8 %in% cusip_large_2019$cusip_8))
 
 ### EZ ###
 
-Z_int_panel_cries_EZ_large <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_EZ_large <- func_panel_est(formula_Z_int,
                                        dplyr::filter(panel_data_Z_int_crises, 
                                                      EZ == 1 & 
                                                        cusip_8 %in% cusip_large_2019$cusip_8))
 
 ### LTCM ###
 
-Z_int_panel_cries_LTCM_large <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_LTCM_large <- func_panel_est(formula_Z_int,
                                          dplyr::filter(panel_data_Z_int_crises, 
                                                        LTCM == 1 & 
                                                          cusip_8 %in% cusip_large_2019$cusip_8))
 
 ### Dotcom ###
-Z_int_panel_cries_dotcom_large <- func_panel_est(formula_Z_int,
+Z_int_panel_crises_dotcom_large <- func_panel_est(formula_Z_int,
                                            dplyr::filter(panel_data_Z_int_crises, 
                                                          Dotcom == 1 & 
                                                            cusip_8 %in% cusip_large_2019$cusip_8))
@@ -274,3 +274,14 @@ Z_int_panel_VIX_bull_large <- func_panel_est(formula_Z_int,
                                        dplyr::filter(panel_data_Z_int_bear_bull,
                                                      bull_bear_VIX == 'H'&
                                                        cusip_8 %in% cusip_large_2019$cusip_8))
+
+##################################################################
+##################################################################
+####### Z scores regressed on equity-to-integration ratio ########
+##################################################################
+##################################################################
+
+panel_data_Z_eq_int <- panel_Z %>%
+  dplyr::left_join(., panel_data_vol_eq_int, by = c('cusip_8', 'Q_num', 'bank_size', 
+                                             't1_t2_ratio', 'npa_ratio', 
+                                             'loss_prov_ratio', 'com_eq_ratio'))
