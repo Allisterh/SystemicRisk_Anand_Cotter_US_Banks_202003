@@ -66,7 +66,8 @@ func_p_value_cw07_bank <- function(df)
 }
 
 
-### Nesting panel data for vol regression for each bank
+### Nesting panel data for vol regression for each bank and computing
+### CW 2007 p values
 
 nest_vol_CW07 <- panel_data_vol %>%
   tidyr::nest(data = !cusip_8) %>%
