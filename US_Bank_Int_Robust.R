@@ -16,7 +16,7 @@ name_script_file <- "US_Bank_Int_Stability_Z.R"
 source(name_script_file, echo = F) 
 
 #########################################################
-### Clark-West (2007) test for out of sample forecast ###
+### Clark-West (2007) test for predictive accuracy ######
 #########################################################
 
 func_clark_west <- function(y_hat_big, y_hat_small, y)
