@@ -76,3 +76,67 @@ nest_vol_CW07 <- panel_data_vol %>%
   dplyr::filter(num_rows >= 5) %>%
   dplyr::mutate('cw_07_p_value' = purrr::map_dbl(no_missing_data, 
                                                  func_p_value_cw07_bank))
+
+## Systemic banks only 
+nest_vol_CW07_sys <- panel_data_vol %>%
+  tidyr::nest(data = !cusip_8) %>%
+  dplyr::filter(cusip_8 %in% bank_cusip_sys$cusip_8) %>%
+  dplyr::mutate('no_missing_data' = purrr::map(data, na.omit),
+                'num_rows' = purrr::map_dbl(no_missing_data, nrow)) %>%
+  dplyr::filter(num_rows >= 5) %>%
+  dplyr::mutate('cw_07_p_value_sys' = purrr::map_dbl(no_missing_data, 
+                                                 func_p_value_cw07_bank))
+
+## Large banks only
+nest_vol_CW07_large <- panel_data_vol %>%
+  tidyr::nest(data = !cusip_8) %>%
+  dplyr::filter(cusip_8 %in% cusip_large_2019$cusip_8) %>%
+  dplyr::mutate('no_missing_data' = purrr::map(data, na.omit),
+                'num_rows' = purrr::map_dbl(no_missing_data, nrow)) %>%
+  dplyr::filter(num_rows >= 5) %>%
+  dplyr::mutate('cw_07_p_value_L' = purrr::map_dbl(no_missing_data, 
+                                                   func_p_value_cw07_bank))
+
+## Pre Dodd-Frank
+nest_vol_CW07_pre <- panel_data_vol %>%
+  dplyr::filter(Q_num < 71) %>%
+  tidyr::nest(data = !cusip_8) %>%
+#  dplyr::filter(cusip_8 %in% bank_cusip_sys$cusip_8) %>%
+  dplyr::mutate('no_missing_data' = purrr::map(data, na.omit),
+                'num_rows' = purrr::map_dbl(no_missing_data, nrow)) %>%
+  dplyr::filter(num_rows >= 5) %>%
+  dplyr::mutate('cw_07_p_value_pre' = purrr::map_dbl(no_missing_data, 
+                                                   func_p_value_cw07_bank))
+
+## Post Dodd-Frank
+nest_vol_CW07_post <- panel_data_vol %>%
+  dplyr::filter(Q_num >= 71) %>%
+  tidyr::nest(data = !cusip_8) %>%
+  #  dplyr::filter(cusip_8 %in% bank_cusip_sys$cusip_8) %>%
+  dplyr::mutate('no_missing_data' = purrr::map(data, na.omit),
+                'num_rows' = purrr::map_dbl(no_missing_data, nrow)) %>%
+  dplyr::filter(num_rows >= 5) %>%
+  dplyr::mutate('cw_07_p_value_post' = purrr::map_dbl(no_missing_data, 
+                                                     func_p_value_cw07_bank))
+
+## Large banks pre and post Dodd Frank
+# Pre
+nest_vol_CW07_pre_L <- panel_data_vol %>%
+  dplyr::filter(Q_num < 71) %>%
+  tidyr::nest(data = !cusip_8) %>%
+  dplyr::filter(cusip_8 %in% cusip_large_2019$cusip_8) %>%
+  dplyr::mutate('no_missing_data' = purrr::map(data, na.omit),
+                'num_rows' = purrr::map_dbl(no_missing_data, nrow)) %>%
+  dplyr::filter(num_rows >= 5) %>%
+  dplyr::mutate('cw_07_p_value_pre_L' = purrr::map_dbl(no_missing_data, 
+                                                     func_p_value_cw07_bank))
+# Post
+nest_vol_CW07_post_L <- panel_data_vol %>%
+  dplyr::filter(Q_num >= 71) %>%
+  tidyr::nest(data = !cusip_8) %>%
+  dplyr::filter(cusip_8 %in% cusip_large_2019$cusip_8) %>%
+  dplyr::mutate('no_missing_data' = purrr::map(data, na.omit),
+                'num_rows' = purrr::map_dbl(no_missing_data, nrow)) %>%
+  dplyr::filter(num_rows >= 5) %>%
+  dplyr::mutate('cw_07_p_value_post_L' = purrr::map_dbl(no_missing_data, 
+                                                       func_p_value_cw07_bank))
