@@ -140,3 +140,40 @@ nest_vol_CW07_post_L <- panel_data_vol %>%
   dplyr::filter(num_rows >= 5) %>%
   dplyr::mutate('cw_07_p_value_post_L' = purrr::map_dbl(no_missing_data, 
                                                        func_p_value_cw07_bank))
+
+#############################################################################
+##################### Testing data for bank ratings #########################
+#############################################################################
+
+file_data_ratings <- 'Rating_data_Compustat_1993_2017.dta'
+
+data_ratings <- haven::read_dta(file_data_ratings) %>%
+  dplyr::filter(sic %in% 6020:6069 | sic %in% 6710:6712) %>%
+  dplyr::select(gvkey, datadate, cik, sic, cusip, splticrm, spsdrm, spsticrm) %>%
+  dplyr::mutate('Year' = lubridate::year(datadate),
+                'Month' = lubridate::month(datadate)) 
+
+data_ratings <- data_ratings %>%
+  dplyr::filter(Year >= 1993 & Month %in% c(1, 4, 7, 10)) %>%
+  dplyr::mutate('cusip_8' = substr(cusip, 1, 8),
+                'qtr' = dplyr::case_when(Month == 1 ~ 'Q1', 
+                                         Month == 4 ~ 'Q2', 
+                                         Month == 7 ~ 'Q3', 
+                                         Month == 10 ~ 'Q4'))
+
+func_col_concat <- function(df)
+{
+  # This function combines year column and quarter
+  # column to generate year-quarter column
+  datacqtr <- paste0(df$Year, df$qtr)
+  df <- cbind(df, datacqtr)
+  return(df)
+}
+
+# Year-quarter column
+data_ratings <- func_col_concat(data_ratings)
+
+# Merging with Year-quarter column and Q_num
+data_ratings <- data_ratings %>%
+  dplyr::left_join(., tibble_year_quarter, by = 'datacqtr') %>%
+  dplyr::select(cusip_8, Q_num, splticrm, spsdrm, spsticrm)
