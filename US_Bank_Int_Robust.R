@@ -147,13 +147,13 @@ nest_vol_CW07_post_L <- panel_data_vol %>%
 
 file_data_ratings <- 'Rating_data_Compustat_1993_2017.dta'
 
-data_ratings <- haven::read_dta(file_data_ratings) %>%
+data_ratings_0 <- haven::read_dta(file_data_ratings) %>%
   dplyr::filter(sic %in% 6020:6069 | sic %in% 6710:6712) %>%
   dplyr::select(gvkey, datadate, cik, sic, cusip, splticrm, spsdrm, spsticrm) %>%
   dplyr::mutate('Year' = lubridate::year(datadate),
                 'Month' = lubridate::month(datadate)) 
 
-data_ratings <- data_ratings %>%
+data_ratings <- data_ratings_0 %>%
   dplyr::filter(Year >= 1993 & Month %in% c(1, 4, 7, 10)) %>%
   dplyr::mutate('cusip_8' = substr(cusip, 1, 8),
                 'qtr' = dplyr::case_when(Month == 1 ~ 'Q1', 
@@ -170,10 +170,31 @@ func_col_concat <- function(df)
   return(df)
 }
 
+
 # Year-quarter column
 data_ratings <- func_col_concat(data_ratings)
 
 # Merging with Year-quarter column and Q_num
 data_ratings <- data_ratings %>%
   dplyr::left_join(., tibble_year_quarter, by = 'datacqtr') %>%
-  dplyr::select(cusip_8, Q_num, splticrm, spsdrm, spsticrm)
+  dplyr::select(cusip_8, Q_num, splticrm, spsdrm, spsticrm) %>%
+  tibble::as_tibble()
+
+
+func_blank_NA <- function(vec)
+{
+  # This function accepts vectors with possible
+  # empty values and replaces them with NA entries
+  vec_NA <- replace(vec, vec == "" | vec == " ", NA)
+  return(vec_NA)
+}
+
+data_ratings <- apply(data_ratings, 2, func_blank_NA) %>%
+  tibble::as_tibble()
+
+temp_temp <- as.double(data_ratings$Q_num)
+data_ratings$Q_num <- temp_temp #to keep the column as integer type
+
+# Merging with the main panel
+panel_data_ratings <- panel_data_vol %>%
+  dplyr::left_join(., data_ratings, by = c('cusip_8', 'Q_num'))
