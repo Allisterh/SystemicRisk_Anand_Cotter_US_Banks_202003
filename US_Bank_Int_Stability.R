@@ -87,6 +87,10 @@ lag5_int_df <- func_lag_tib_wide(lag4_int_df)
 
 
 # Converting the wide formatted lags to long format
+lag0_int_long <- vol_int_bank_long %>%
+  dplyr::select(Q_num, Bank, SRE_2) %>%
+  dplyr::rename('int_lag0' = SRE_2)
+
 lag1_int_long <- lag1_int_df %>%
   tidyr::gather(-Q_num, key = 'Bank', value = 'int_lag1')
 
@@ -104,6 +108,7 @@ lag5_int_long <- lag5_int_df %>%
 
 # Arranging in a panel format
 panel_int_vol_full <- vol_int_bank_long %>%
+  dplyr::left_join(., lag0_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag1_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag2_int_long, by = c('Bank', 'Q_num')) %>%
   dplyr::left_join(., lag3_int_long, by = c('Bank', 'Q_num')) %>%
@@ -118,13 +123,17 @@ panel_int_vol_full <- vol_int_bank_long %>%
 formula_vol_int <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + 
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
-formula_vol_int_2 <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 +
-  bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+formula_vol_int_2 <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + 
+  int_lag4 + int_lag5 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
 panel_data_vol <- panel_int_vol_full %>%
-  dplyr::select(cusip_8, Q_num, vol_qtr, int_lag1, int_lag2, int_lag3, 
+  dplyr::select(cusip_8, Q_num, vol_qtr, int_lag0, int_lag1, int_lag2, int_lag3, 
                 int_lag4, int_lag5, bank_size, t1_t2_ratio, npa_ratio, 
                 loss_prov_ratio, com_eq_ratio)
+
+# Removing duplicated firm-year entries
+panel_data_vol <- panel_data_vol %>%
+  dplyr::distinct(cusip_8, Q_num, .keep_all = TRUE)
 
 ##################################################
 ####### VOLATILITY REGRESSED ON INTEGRATION ######
