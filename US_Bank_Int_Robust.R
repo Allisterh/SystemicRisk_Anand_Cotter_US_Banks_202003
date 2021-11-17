@@ -198,3 +198,46 @@ data_ratings$Q_num <- temp_temp #to keep the column as integer type
 # Merging with the main panel
 panel_data_ratings <- panel_data_vol %>%
   dplyr::left_join(., data_ratings, by = c('cusip_8', 'Q_num'))
+
+########################################################################
+############ APPLICATIONS OF BANK INTEGRATION ##########################
+########################################################################
+
+########################################################
+### Predicting bank volatility with integration lags ###
+########################################################
+
+nest_pred_vol_int <- nest_quarter_vol_reg %>%
+  dplyr::mutate('qtr_med_int' = purrr::map_dbl(SRE_2, 
+                                               function(vec){return(median(vec, na.rm = T))}),
+                'qtr_med_vol' = purrr::map_dbl(vol_qtr,
+                                               function(vec){return(median(vec, na.rm = T))}))
+
+### Plotting bank integration and volatility together ###
+
+# Creating primary axis: bank integration
+plot_vol_int <- ggplot2::ggplot(data = nest_pred_vol_int, 
+                                mapping = aes(x = Q_num)) +
+  geom_point(mapping = aes(y = qtr_med_int)) +
+  geom_line(mapping = aes(y = qtr_med_int), linetype = 'dotdash') 
+# Creating secondary axis: bank volatility
+plot_vol_int <- plot_vol_int +
+  geom_point(mapping = aes(y = 100*qtr_med_vol), shape = 2) +
+  geom_line(mapping = aes(y = 100*qtr_med_vol), linetype = 'twodash') +
+  scale_y_continuous(sec.axis = sec_axis(~./100, name = 'Volatility')) +
+  scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
+  theme_bw() +
+  labs(y = 'Integration', x = '') +
+  theme(text = element_text(size = 18)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+
+### Panel regression table of vol ~ int lags ###
+table_vol_int_ols <- knitr::kable(vol_int_ols$coefficients, 'latex')
+table_vol_int <- knitr::kable(vol_int_panel$coefficients, 'latex')
+table_vol_int_pre_DF <- knitr::kable(vol_int_panel_pre_DF$coefficients, 'latex')
+table_vol_int_post_DF <- knitr::kable(vol_int_panel_post_DF$coefficients, 'latex')
+table_vol_int_large <- knitr::kable(vol_int_panel_large$coefficients, 'latex')
+table_vol_int_large_pre_DF <- knitr::kable(vol_int_panel_large_pre_DF$coefficients, 'latex')
+table_vol_int_large_post_DF <- knitr::kable(vol_int_panel_large_post_DF$coefficients, 'latex')
+table_vol_int_crises_agg <- knitr::kable(vol_int_crises_agg$coefficients, 'latex')
+table_vol_int_crises_agg_large <- knitr::kable(vol_int_crises_agg_large$coefficients, 'latex')

@@ -144,7 +144,7 @@ panel_data_vol <- panel_data_vol %>%
 ###########################
 
 ### OLS = Pooling Panel Regression ###
-vol_int_ols <- plm::plm(formula_vol_int,
+vol_int_ols <- plm::plm(formula_vol_int_2,
                         panel_data_vol,
                         model = 'pooling') %>%
   summary(.)
@@ -281,6 +281,12 @@ vol_int_crises_LTCM <- func_panel_est(formula = formula_vol_int_2,
                                      panel_data = panel_data_vol_crises_LTCM)
 vol_int_crises_Dotcom <- func_panel_est(formula = formula_vol_int_2,
                                      panel_data = panel_data_vol_crises_Dotcom)
+
+### Large banks, any crises ###
+vol_int_crises_agg_large <- func_panel_est(formula_vol_int_2,
+                                           filter(panel_data_vol_crises, 
+                                                  cusip_8 %in% cusip_large_2019$cusip_8 & Crises ==1))
+
 
 #########################################################################
 #########################################################################
