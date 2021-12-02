@@ -440,6 +440,10 @@ vol_eq_int_crises_Dotcom <- func_panel_est(formula = formula_vol_eq_int_2,
                                         panel_data = dplyr::filter(panel_data_vol_eq_int_crises,
                                                                    Dotcom == 1))
 
+vol_eq_int_crises_large <- func_panel_est(formula_vol_eq_int_2, 
+                                          filter(panel_data_vol_eq_int_crises, 
+                                                 Crises == 1 & cusip_8 %in% cusip_large_2019$cusip_8))
+
 #######################################################################
 ######### TED SPREAD AND VIX BULL-BEAR ANALYSIS #######################
 #######################################################################
