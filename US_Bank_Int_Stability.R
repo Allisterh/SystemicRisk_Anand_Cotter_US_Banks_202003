@@ -143,6 +143,9 @@ panel_data_vol <- panel_data_vol %>%
 ### All banks full time ###
 ###########################
 
+cor_panel_data_vol <- cor(panel_data_vol[ , -c(1,2,4)], use = 'complete.obs')
+#knitr::kable(round(cor_panel_data_vol, digits = 3), 'latex')
+
 ### OLS = Pooling Panel Regression ###
 vol_int_ols <- plm::plm(formula_vol_int_2,
                         panel_data_vol,
