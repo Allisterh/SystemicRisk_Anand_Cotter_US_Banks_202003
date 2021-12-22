@@ -219,7 +219,7 @@ nest_pred_vol_int <- nest_quarter_vol_reg %>%
 plot_vol_int <- ggplot2::ggplot(data = nest_pred_vol_int, 
                                 mapping = aes(x = Q_num)) +
   geom_point(mapping = aes(y = qtr_med_int)) +
-  geom_line(mapping = aes(y = qtr_med_int), linetype = 'dotdash') 
+  geom_line(mapping = aes(y = qtr_med_int), linetype = 'solid') 
 # Creating secondary axis: bank volatility
 plot_vol_int <- plot_vol_int +
   geom_point(mapping = aes(y = 100*qtr_med_vol), shape = 2) +
