@@ -12,7 +12,7 @@ library(tseries)
 library(Matrix)
 
 ### Source prior script for computing bank integration ### 
-name_script_file <- "US_Bank_Int_Stability_Z.R"
+name_script_file <- "US_Bank_Int_Beta.R"
 source(name_script_file, echo = F) 
 
 #########################################################

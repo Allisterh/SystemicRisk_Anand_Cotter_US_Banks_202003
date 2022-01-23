@@ -77,6 +77,12 @@ rm(data_US_banks_daily)
 returns_daily_banks_US <- data_US_banks_daily_2 %>%
   dplyr::select(date, comnam, siccd, ret, hsiccd, shrcd, ncusip, cusip)
 
+## Link permno/co to ncusip/cusip 
+link_permno_ncusip_cusip <- data_US_banks_daily_2 %>%
+  dplyr::select(permno, siccd, ncusip, permco, cusip, comnam) %>%
+  dplyr::rename('cusip_8' = cusip) %>%
+  dplyr::distinct()
+
 # Remove the (heavy) derived data file
 # rm(data_US_banks_daily_2)
 
