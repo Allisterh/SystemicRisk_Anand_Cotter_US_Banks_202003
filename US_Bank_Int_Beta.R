@@ -177,3 +177,18 @@ tvol_int_panel_L_VIX <- func_panel_est(formula_tvol_int,
 integration_agg <- unique(panel_data_beta$int_lag0)
 integration_agg <- integration_agg[!is.na(integration_agg)]
 integration_agg <- integration_agg[integration_agg > 0]
+
+m_pl <- conpl$new(integration_agg)
+est <- estimate_xmin(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,1))
+m_pl$setXmin(est)
+plot(m_pl)
+options(scipen=999)
+
+#bootstrapping
+bs <- bootstrap(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,2,3,4,5,6))
+plot(bs, trim = 0.1)
+hist(bs$bootstraps[ ,2])
+hist(bs$bootstraps[ ,3])
+
+#testing powr law hypothesis
+bs_p <- bootstrap_p(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1))
