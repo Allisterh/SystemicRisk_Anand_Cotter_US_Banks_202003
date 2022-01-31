@@ -171,3 +171,9 @@ tvol_int_panel_L_VIX <- func_panel_est(formula_tvol_int,
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
 
 ############################################################################
+################# POWER LAW INVESTIGATION ##################################
+############################################################################
+
+integration_agg <- unique(panel_data_beta$int_lag0)
+integration_agg <- integration_agg[!is.na(integration_agg)]
+integration_agg <- integration_agg[integration_agg > 0]
