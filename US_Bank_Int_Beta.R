@@ -174,15 +174,20 @@ tvol_int_panel_L_VIX <- func_panel_est(formula_tvol_int,
 ################# POWER LAW INVESTIGATION ##################################
 ############################################################################
 
+### Collecting aggregate integration data
 integration_agg <- unique(panel_data_beta$int_lag0)
 integration_agg <- integration_agg[!is.na(integration_agg)]
 integration_agg <- integration_agg[integration_agg > 0]
 
+options(scipen=999)
 m_pl <- conpl$new(integration_agg)
 est <- estimate_xmin(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,1))
 m_pl$setXmin(est)
+m_par <- estimate_pars(m_pl)
+m_pl$setPars(m_par)
+#lines(m_pl, col = 2, lwd = 2, xlabel = 'CDF')
 plot(m_pl)
-options(scipen=999)
+
 
 #bootstrapping
 bs <- bootstrap(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,2,3,4,5,6))
