@@ -170,6 +170,125 @@ tvol_int_panel_H_VIX <- func_panel_est(formula_tvol_int,
 tvol_int_panel_L_VIX <- func_panel_est(formula_tvol_int, 
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
 
+
+############################################################################
+############### Relation with integration-to-equity ratio ##################
+############################################################################
+
+formula_beta_int_eq <- b_mkt ~ int_eq_lag1 + int_eq_lag2 + int_eq_lag3 + 
+  int_eq_lag4 + int_eq_lag5 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+formula_ivol_int_eq <- ivol ~ int_eq_lag1 + int_eq_lag2 + int_eq_lag3 + 
+  int_eq_lag4 + int_eq_lag5 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+formula_tvol_int_eq <- tvol ~ int_eq_lag1 + int_eq_lag2 + int_eq_lag3 + 
+  int_eq_lag4 + int_eq_lag5 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+
+### Generating panel data ###
+
+panel_data_beta <- panel_data_beta %>%
+  dplyr::mutate('int_eq_lag0' = ifelse(com_eq_ratio == 0, NA, int_lag0/com_eq_ratio),
+                'int_eq_lag1' = ifelse(com_eq_ratio == 0, NA, int_lag1/com_eq_ratio),
+                'int_eq_lag2' = ifelse(com_eq_ratio == 0, NA, int_lag2/com_eq_ratio),
+                'int_eq_lag3' = ifelse(com_eq_ratio == 0, NA, int_lag3/com_eq_ratio),
+                'int_eq_lag4' = ifelse(com_eq_ratio == 0, NA, int_lag4/com_eq_ratio),
+                'int_eq_lag5' = ifelse(com_eq_ratio == 0, NA, int_lag5/com_eq_ratio))
+
+# Beta: all banks all time
+beta_int_eq_panel_full <- func_panel_est(formula_beta_int_eq, panel_data_beta)
+# Beta: large banks all time
+beta_int_eq_panel_large <- func_panel_est(formula_beta_int_eq, 
+                                       dplyr::filter(panel_data_beta, 
+                                                     cusip_8 %in% cusip_large_2019$cusip_8))
+# Beta: all banks pre DF
+beta_int_eq_panel_pre_DF <- func_panel_est(formula_beta_int_eq, dplyr::filter(panel_data_beta,
+                                                                        Q_num < 71))
+# Beta: all banks post DF
+beta_int_eq_panel_post_DF <- func_panel_est(formula_beta_int_eq, dplyr::filter(panel_data_beta,
+                                                                         Q_num >= 71))
+# Beta: Crises
+beta_int_eq_panel_crises <- func_panel_est(formula_beta_int_eq, dplyr::filter(panel_data_beta,
+                                                                        Crises == 1))
+# Beta: Bull TED
+beta_int_panel_H_TED <- func_panel_est(formula_beta_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'H'))
+# Beta: Bear TED
+beta_int_panel_L_TED <- func_panel_est(formula_beta_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'L'))
+# Beta: Bull VIX
+beta_int_panel_H_VIX <- func_panel_est(formula_beta_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'H'))
+# Beta: Bear VIX
+beta_int_panel_L_VIX <- func_panel_est(formula_beta_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
+
+###########################################################################
+
+# Benchmark result: no intergation
+ivol_int_panel_bench <- func_panel_est(formula_ivol_benchmark, panel_data_beta)
+# Ivol: all banks all time
+ivol_int_panel_full <- func_panel_est(formula_ivol_int, panel_data_beta)
+# Ivol: large banks all time
+ivol_int_panel_large <- func_panel_est(formula_ivol_int, 
+                                       dplyr::filter(panel_data_beta, 
+                                                     cusip_8 %in% cusip_large_2019$cusip_8))
+# Ivol: all banks pre DF
+ivol_int_panel_pre_DF <- func_panel_est(formula_ivol_int, dplyr::filter(panel_data_beta,
+                                                                        Q_num < 71))
+# Ivol: all banks post DF
+ivol_int_panel_post_DF <- func_panel_est(formula_ivol_int, dplyr::filter(panel_data_beta,
+                                                                         Q_num >= 71))
+
+# Ivol: Crises
+ivol_int_panel_crises <- func_panel_est(formula_ivol_int, dplyr::filter(panel_data_beta,
+                                                                        Crises == 1))
+# ivol: Bull TED
+ivol_int_panel_H_TED <- func_panel_est(formula_ivol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'H'))
+# ivol: Bear TED
+ivol_int_panel_L_TED <- func_panel_est(formula_ivol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'L'))
+# ivol: Bull VIX
+ivol_int_panel_H_VIX <- func_panel_est(formula_ivol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'H'))
+# ivol: Bear VIX
+ivol_int_panel_L_VIX <- func_panel_est(formula_ivol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
+
+############################################################################
+# Benchmark result: no intergation
+tvol_int_panel_bench <- func_panel_est(formula_tvol_benchmark, panel_data_beta)
+# Tvol: all banks all time
+tvol_int_panel_full <- func_panel_est(formula_tvol_int, panel_data_beta)
+# Tvol: large banks all time
+tvol_int_panel_large <- func_panel_est(formula_tvol_int, 
+                                       dplyr::filter(panel_data_beta, 
+                                                     cusip_8 %in% cusip_large_2019$cusip_8))
+# Tvol: all banks pre DF
+tvol_int_panel_pre_DF <- func_panel_est(formula_tvol_int, dplyr::filter(panel_data_beta,
+                                                                        Q_num < 71))
+# Tvol: all banks post DF
+tvol_int_panel_post_DF <- func_panel_est(formula_tvol_int, dplyr::filter(panel_data_beta,
+                                                                         Q_num >= 71))
+
+# Ivol: Crises
+tvol_int_panel_crises <- func_panel_est(formula_tvol_int, dplyr::filter(panel_data_beta,
+                                                                        Crises == 1))
+# ivol: Bull TED
+tvol_int_panel_H_TED <- func_panel_est(formula_tvol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'H'))
+# ivol: Bear TED
+tvol_int_panel_L_TED <- func_panel_est(formula_tvol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'L'))
+# ivol: Bull VIX
+tvol_int_panel_H_VIX <- func_panel_est(formula_tvol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'H'))
+# ivol: Bear VIX
+tvol_int_panel_L_VIX <- func_panel_est(formula_tvol_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
+
+
+
+
+
 ############################################################################
 ################# POWER LAW INVESTIGATION ##################################
 ############################################################################
@@ -181,19 +300,42 @@ integration_agg <- integration_agg[integration_agg > 0]
 
 options(scipen=999)
 m_pl <- conpl$new(integration_agg)
-est <- estimate_xmin(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,1))
+est <- estimate_xmin(m_pl, xmins = seq(0,10,0.05))
 m_pl$setXmin(est)
+plot(m_pl)
+lines(m_pl, col = 2, lwd = 2)
+
 m_par <- estimate_pars(m_pl)
 m_pl$setPars(m_par)
 #lines(m_pl, col = 2, lwd = 2, xlabel = 'CDF')
-plot(m_pl)
+#plot(m_pl)
 
 
 #bootstrapping
-bs <- bootstrap(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1,2,3,4,5,6))
+bs <- bootstrap(m_pl, xmins = seq(0,10,0.05), threads = 4)
 plot(bs, trim = 0.1)
 hist(bs$bootstraps[ ,2])
 hist(bs$bootstraps[ ,3])
 
 #testing powr law hypothesis
-bs_p <- bootstrap_p(m_pl, xmins = c(0,0.1,0.2,0.21,0.22,0.23,0.24,0.25,0.26,0.27,0.28,0.29,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1))
+bs_p <- bootstrap_p(m_pl, xmins = seq(0,10,0.05), threads = 4) # p value 0, reject
+
+###
+
+# Fitting lognormal
+m_ln <- conlnorm$new(integration_agg)
+est_ln <- estimate_xmin(m_ln) #this step takes time
+m_ln$setXmin(est_ln)
+lines(m_ln, col = 3, lwd = 2)
+
+# Comparing distributions
+plot(m_ln, ylab = 'CDF')
+lines(m_pl, col = 3)
+lines(m_ln, col = 2, lty = 2) ## seems like powerlaw and lognormal are poor fits
+
+fit_pl_ln <- compare_distributions(m_pl, m_ln)
+# compare_distributions(m_ln, m_pl)$p_one_sided
+
+# Bootstrapping
+bs_ln <- bootstrap_p(m_ln, no_of_sims = 100, threads = 4)
+
