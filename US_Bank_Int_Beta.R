@@ -65,6 +65,7 @@ panel_data_beta <- panel_data_beta %>%
 formula_beta_benchmark <- b_mkt ~ bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 formula_ivol_benchmark <- ivol ~ bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 formula_tvol_benchmark <- tvol ~ bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+formula_r2_benchmark <- r2 ~ bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
 formula_beta_int <- b_mkt ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 +
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
@@ -72,9 +73,14 @@ formula_ivol_int <- ivol ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 formula_tvol_int <- tvol ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 +
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
+formula_r2_int <- r2 ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + int_lag5 +
+  bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
 
 ##########################################################################
+############### Regressing betas on integration lags #####################
+##########################################################################
+
 # Benchmark result: no intergation
 beta_int_panel_bench <- func_panel_est(formula_beta_benchmark, panel_data_beta)
 # Beta: all banks all time
@@ -105,6 +111,8 @@ beta_int_panel_H_VIX <- func_panel_est(formula_beta_int,
 beta_int_panel_L_VIX <- func_panel_est(formula_beta_int, 
                                           dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
 
+###########################################################################
+########### Regressing idiosyncratic volatility on integration lags #######
 ###########################################################################
 
 # Benchmark result: no intergation
@@ -139,6 +147,9 @@ ivol_int_panel_L_VIX <- func_panel_est(formula_ivol_int,
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
 
 ############################################################################
+############# Integrating total volatility on integration lags #############
+############################################################################
+
 # Benchmark result: no intergation
 tvol_int_panel_bench <- func_panel_est(formula_tvol_benchmark, panel_data_beta)
 # Tvol: all banks all time
@@ -169,6 +180,41 @@ tvol_int_panel_H_VIX <- func_panel_est(formula_tvol_int,
 # ivol: Bear VIX
 tvol_int_panel_L_VIX <- func_panel_est(formula_tvol_int, 
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
+
+##########################################################################
+############### Regressing CAPM R squares on integration lags ############
+##########################################################################
+
+# Benchmark result: no intergation
+r2_int_panel_bench <- func_panel_est(formula_r2_benchmark, panel_data_beta)
+# r2: all banks all time
+r2_int_panel_full <- func_panel_est(formula_r2_int, panel_data_beta)
+# r2: large banks all time
+r2_int_panel_large <- func_panel_est(formula_r2_int, 
+                                       dplyr::filter(panel_data_beta, 
+                                                     cusip_8 %in% cusip_large_2019$cusip_8))
+# r2: all banks pre DF
+r2_int_panel_pre_DF <- func_panel_est(formula_r2_int, dplyr::filter(panel_data_beta,
+                                                                        Q_num < 71))
+# r2: all banks post DF
+r2_int_panel_post_DF <- func_panel_est(formula_r2_int, dplyr::filter(panel_data_beta,
+                                                                         Q_num >= 71))
+# r2: Crises
+r2_int_panel_crises <- func_panel_est(formula_r2_int, dplyr::filter(panel_data_beta,
+                                                                        Crises == 1))
+# r2: Bull TED
+r2_int_panel_H_TED <- func_panel_est(formula_r2_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'H'))
+# r2: Bear TED
+r2_int_panel_L_TED <- func_panel_est(formula_r2_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'L'))
+# r2: Bull VIX
+r2_int_panel_H_VIX <- func_panel_est(formula_r2_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'H'))
+# r2: Bear VIX
+r2_int_panel_L_VIX <- func_panel_est(formula_r2_int, 
+                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
+
 
 
 ############################################################################
@@ -220,74 +266,6 @@ beta_int_panel_H_VIX <- func_panel_est(formula_beta_int,
 beta_int_panel_L_VIX <- func_panel_est(formula_beta_int, 
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
 
-###########################################################################
-
-# Benchmark result: no intergation
-ivol_int_panel_bench <- func_panel_est(formula_ivol_benchmark, panel_data_beta)
-# Ivol: all banks all time
-ivol_int_panel_full <- func_panel_est(formula_ivol_int, panel_data_beta)
-# Ivol: large banks all time
-ivol_int_panel_large <- func_panel_est(formula_ivol_int, 
-                                       dplyr::filter(panel_data_beta, 
-                                                     cusip_8 %in% cusip_large_2019$cusip_8))
-# Ivol: all banks pre DF
-ivol_int_panel_pre_DF <- func_panel_est(formula_ivol_int, dplyr::filter(panel_data_beta,
-                                                                        Q_num < 71))
-# Ivol: all banks post DF
-ivol_int_panel_post_DF <- func_panel_est(formula_ivol_int, dplyr::filter(panel_data_beta,
-                                                                         Q_num >= 71))
-
-# Ivol: Crises
-ivol_int_panel_crises <- func_panel_est(formula_ivol_int, dplyr::filter(panel_data_beta,
-                                                                        Crises == 1))
-# ivol: Bull TED
-ivol_int_panel_H_TED <- func_panel_est(formula_ivol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'H'))
-# ivol: Bear TED
-ivol_int_panel_L_TED <- func_panel_est(formula_ivol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'L'))
-# ivol: Bull VIX
-ivol_int_panel_H_VIX <- func_panel_est(formula_ivol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'H'))
-# ivol: Bear VIX
-ivol_int_panel_L_VIX <- func_panel_est(formula_ivol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
-
-############################################################################
-# Benchmark result: no intergation
-tvol_int_panel_bench <- func_panel_est(formula_tvol_benchmark, panel_data_beta)
-# Tvol: all banks all time
-tvol_int_panel_full <- func_panel_est(formula_tvol_int, panel_data_beta)
-# Tvol: large banks all time
-tvol_int_panel_large <- func_panel_est(formula_tvol_int, 
-                                       dplyr::filter(panel_data_beta, 
-                                                     cusip_8 %in% cusip_large_2019$cusip_8))
-# Tvol: all banks pre DF
-tvol_int_panel_pre_DF <- func_panel_est(formula_tvol_int, dplyr::filter(panel_data_beta,
-                                                                        Q_num < 71))
-# Tvol: all banks post DF
-tvol_int_panel_post_DF <- func_panel_est(formula_tvol_int, dplyr::filter(panel_data_beta,
-                                                                         Q_num >= 71))
-
-# Ivol: Crises
-tvol_int_panel_crises <- func_panel_est(formula_tvol_int, dplyr::filter(panel_data_beta,
-                                                                        Crises == 1))
-# ivol: Bull TED
-tvol_int_panel_H_TED <- func_panel_est(formula_tvol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'H'))
-# ivol: Bear TED
-tvol_int_panel_L_TED <- func_panel_est(formula_tvol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_TED == 'L'))
-# ivol: Bull VIX
-tvol_int_panel_H_VIX <- func_panel_est(formula_tvol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'H'))
-# ivol: Bear VIX
-tvol_int_panel_L_VIX <- func_panel_est(formula_tvol_int, 
-                                       dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
-
-
-
-
 
 ############################################################################
 ################# POWER LAW INVESTIGATION ##################################
@@ -324,18 +302,18 @@ bs_p <- bootstrap_p(m_pl, xmins = seq(0,10,0.05), threads = 4) # p value 0, reje
 
 # Fitting lognormal
 m_ln <- conlnorm$new(integration_agg)
-est_ln <- estimate_xmin(m_ln) #this step takes time
-m_ln$setXmin(est_ln)
-lines(m_ln, col = 3, lwd = 2)
+#est_ln <- estimate_xmin(m_ln) #this step takes time
+#m_ln$setXmin(est_ln)
+#lines(m_ln, col = 3, lwd = 2)
 
 # Comparing distributions
-plot(m_ln, ylab = 'CDF')
-lines(m_pl, col = 3)
-lines(m_ln, col = 2, lty = 2) ## seems like powerlaw and lognormal are poor fits
+#plot(m_ln, ylab = 'CDF')
+#lines(m_pl, col = 3)
+#lines(m_ln, col = 2, lty = 2) ## seems like powerlaw and lognormal are poor fits
 
-fit_pl_ln <- compare_distributions(m_pl, m_ln)
+#fit_pl_ln <- compare_distributions(m_pl, m_ln)
 # compare_distributions(m_ln, m_pl)$p_one_sided
 
 # Bootstrapping
-bs_ln <- bootstrap_p(m_ln, no_of_sims = 100, threads = 4)
+#bs_ln <- bootstrap_p(m_ln, no_of_sims = 100, threads = 4)
 

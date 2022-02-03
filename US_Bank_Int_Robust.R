@@ -247,14 +247,13 @@ table_vol_int_crises_agg_large <- knitr::kable(vol_int_crises_agg_large$coeffici
 ##### Median integration plots vs median bank beta, ivol, tvol #######
 ######################################################################
 
-
-
 plot_data_beta_vol_int <- panel_data_beta %>%
   dplyr::group_by(Q_num) %>%
   summarise(med_beta = median(b_mkt, na.rm = T),
             med_int = median(int_lag0, na.rm = T),
             med_ivol = median(ivol, na.rm = T),
-            med_tvol = median(tvol, na.rm = T))
+            med_tvol = median(tvol, na.rm = T),
+            med_r2 = median(r2, na.rm = T))
 
 
 plot_med_beta_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
@@ -287,6 +286,19 @@ plot_med_tvol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   geom_point(aes(y = 200*med_tvol), shape = 2) +
   geom_line(aes(y = 200*med_tvol), linetype = 'twodash') +
   scale_y_continuous(sec.axis = sec_axis(~./200, name = 'Total vol')) +
+  scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
+  theme_bw() +
+  labs(y = 'Integration', x = '') +
+  theme(text = element_text(size = 18)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+
+
+plot_med_capmrsqr_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
+  geom_point(aes(y = med_int)) +
+  geom_line(aes(y = med_int), linetype = 'solid') +
+  geom_point(aes(y = 100*med_r2), shape = 2) +
+  geom_line(aes(y = 100*med_r2), linetype = 'twodash') +
+  scale_y_continuous(sec.axis = sec_axis(~./100, name = 'CAPM Rsqr')) +
   scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
   theme_bw() +
   labs(y = 'Integration', x = '') +
