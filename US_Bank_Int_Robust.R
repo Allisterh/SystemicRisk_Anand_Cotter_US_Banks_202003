@@ -10,6 +10,7 @@ library(sandwich)
 library(plm)
 library(tseries)
 library(Matrix)
+library(cowplot)
 
 ### Source prior script for computing bank integration ### 
 name_script_file <- "US_Bank_Int_Beta.R"
@@ -224,12 +225,15 @@ plot_vol_int <- ggplot2::ggplot(data = nest_pred_vol_int,
 plot_vol_int <- plot_vol_int +
   geom_point(mapping = aes(y = 100*qtr_med_vol), shape = 2) +
   geom_line(mapping = aes(y = 100*qtr_med_vol), linetype = 'twodash') +
-  scale_y_continuous(sec.axis = sec_axis(~./100, name = 'Volatility')) +
+  scale_y_continuous(sec.axis = sec_axis(~./100, name = 'Historical vol')) +
   scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
   theme_bw() +
   labs(y = 'Integration', x = '') +
   theme(text = element_text(size = 18)) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  annotate('rect', alpha = 0.1,
+           xmin = c(60, 70), xmax = c(66, 78),
+           ymin = c(0,0), ymax = c(100, 100))
 
 ### Panel regression table of vol ~ int lags ###
 table_vol_int_ols <- knitr::kable(vol_int_ols$coefficients, 'latex')
@@ -266,7 +270,14 @@ plot_med_beta_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme_bw() +
   labs(y = 'Integration', x = '') +
   theme(text = element_text(size = 18)) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  annotate('rect', alpha = 0.1,
+           xmin = c(60, 70), xmax = c(66, 78),
+           ymin = c(0,0), ymax = c(100, 100)) +
+  annotate('rect', alpha = 0.1,
+           xmin = c(60, 70), xmax = c(66, 78),
+           ymin = c(0,0), ymax = c(100, 100))
+  
 
 plot_med_ivol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   geom_point(aes(y = med_int)) +
@@ -278,7 +289,10 @@ plot_med_ivol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme_bw() +
   labs(y = 'Integration', x = '') +
   theme(text = element_text(size = 18)) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  annotate('rect', alpha = 0.1,
+           xmin = c(60, 70), xmax = c(66, 78),
+           ymin = c(0,0), ymax = c(100, 100))
 
 plot_med_tvol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   geom_point(aes(y = med_int)) +
@@ -290,7 +304,10 @@ plot_med_tvol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme_bw() +
   labs(y = 'Integration', x = '') +
   theme(text = element_text(size = 18)) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  annotate('rect', alpha = 0.1,
+           xmin = c(60, 70), xmax = c(66, 78),
+           ymin = c(0,0), ymax = c(100, 100))
 
 
 plot_med_capmrsqr_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
@@ -303,4 +320,16 @@ plot_med_capmrsqr_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme_bw() +
   labs(y = 'Integration', x = '') +
   theme(text = element_text(size = 18)) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1)) 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  annotate('rect', alpha = 0.1,
+           xmin = c(60, 70), xmax = c(66, 78),
+           ymin = c(0,0), ymax = c(100, 100))
+
+plot_grid_int_rsqr_beta <- cowplot::plot_grid(plot_med_capmrsqr_int, plot_med_beta_int, 
+                                              labels = c('(A)','(B)'), 
+                                              label_size = 12, nrow = 2)
+plot_grid_int_vol_capm <- cowplot::plot_grid(plot_vol_int, plot_med_ivol_int,
+                                             plot_med_tvol_int, 
+                                             labels = c('(A)','(B)','(C)'), 
+                                             label_size = 12, nrow = 3)
+#plot_grid(plot_grid_int_vol_capm, plot_grid_int_rsqr_beta, nrow = 2, ncol = 1)

@@ -303,8 +303,18 @@ bs_p <- bootstrap_p(m_pl, xmins = seq(0,10,0.05), threads = 4) # p value 0, reje
 # Fitting lognormal
 m_ln <- conlnorm$new(integration_agg)
 #est_ln <- estimate_xmin(m_ln) #this step takes time
-#m_ln$setXmin(est_ln)
-#lines(m_ln, col = 3, lwd = 2)
+xmin_ln <- m_pl$getXmin()
+m_ln$setXmin(xmin_ln) #same xmin as power law for Vuong test
+pars_ln <- estimate_pars(m_ln)
+m_ln$setPars(pars_ln)
+
+# Comparing power and lognormal laws visually
+plot(m_ln, ylab = 'CDF')
+lines(m_pl, lty = 2, lwd = 2, col = 'blue')
+lines(m_ln, col = 'red', lwd = 2)
+
+# Comparing distributions formally
+comp <- compare_distributions(m_pl, m_ln)
 
 # Comparing distributions
 #plot(m_ln, ylab = 'CDF')
@@ -315,5 +325,7 @@ m_ln <- conlnorm$new(integration_agg)
 # compare_distributions(m_ln, m_pl)$p_one_sided
 
 # Bootstrapping
-#bs_ln <- bootstrap_p(m_ln, no_of_sims = 100, threads = 4)
+# Each line takes ~20 minutes each
+bs_ln <- bootstrap(m_ln, xmins = seq(0,10,0.05), threads = 4, no_of_sims = 50)
+bs_p_ln <- bootstrap_p(m_ln, xmins = seq(0,10,0.05), threads = 4, no_of_sims = 50)
 
