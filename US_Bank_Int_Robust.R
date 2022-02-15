@@ -325,11 +325,37 @@ plot_med_capmrsqr_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
            xmin = c(60, 70), xmax = c(66, 78),
            ymin = c(0,0), ymax = c(100, 100))
 
-plot_grid_int_rsqr_beta <- cowplot::plot_grid(plot_med_capmrsqr_int, plot_med_beta_int, 
+plot_grid_int_rsqr_beta <- cowplot::plot_grid(plot_med_capmrsqr_int + theme(axis.text.x = element_blank(),
+                                                                            axis.ticks.x = element_blank()), 
+                                              plot_med_beta_int, 
                                               labels = c('(A)','(B)'), 
                                               label_size = 12, nrow = 2)
-plot_grid_int_vol_capm <- cowplot::plot_grid(plot_vol_int, plot_med_ivol_int,
-                                             plot_med_tvol_int, 
+plot_grid_int_vol_capm <- cowplot::plot_grid(plot_vol_int + theme(axis.text.x = element_blank(),
+                                                                       axis.ticks.x = element_blank()),
+                                             plot_med_ivol_int + theme(axis.text.x = element_blank(),
+                                                                       axis.ticks.x = element_blank()), 
+                                             plot_med_tvol_int,
                                              labels = c('(A)','(B)','(C)'), 
                                              label_size = 12, nrow = 3)
 #plot_grid(plot_grid_int_vol_capm, plot_grid_int_rsqr_beta, nrow = 2, ncol = 1)
+plot_grid_int_tvol_ivol <- cowplot::plot_grid(plot_med_ivol_int + theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()), 
+                                              plot_med_tvol_int, 
+                                              labels = c('(A)','(B)'), 
+                                              label_size = 12, nrow = 2)
+
+plot_int_ivol_tvol <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
+  geom_point(aes(y = med_int)) +
+  geom_line(aes(y = med_int), linetype = 'solid') +
+  geom_point(aes(y = 200*med_ivol), shape = 2) +
+  geom_line(aes(y = 200*med_ivol), linetype = 'twodash') +
+  geom_line(aes(y = 200*med_tvol), linetype = 'dotted') +
+  geom_point(aes(y = 200*med_tvol), size = 4, shape = 20) +
+  scale_y_continuous(sec.axis = sec_axis(~./200, name = 'Idio/Total vol')) +
+  scale_x_continuous(breaks = x_breaks_sys, labels = x_labels_sys) +
+  theme_bw() +
+  labs(y = 'Integration', x = '') +
+  theme(text = element_text(size = 18)) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
+  annotate('rect', alpha = 0.1,
+           xmin = c(60, 70), xmax = c(66, 78),
+           ymin = c(0,0), ymax = c(100, 100))
