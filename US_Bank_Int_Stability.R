@@ -123,6 +123,9 @@ panel_int_vol_full <- vol_int_bank_long %>%
 formula_vol_int <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + int_lag4 + 
   bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
+formula_vol_int_0 <- vol_qtr ~ bank_size + t1_t2_ratio + npa_ratio + 
+  loss_prov_ratio
+
 formula_vol_int_2 <- vol_qtr ~ int_lag1 + int_lag2 + int_lag3 + 
   int_lag4 + int_lag5 + bank_size + t1_t2_ratio + npa_ratio + loss_prov_ratio
 
@@ -153,6 +156,11 @@ vol_int_ols <- plm::plm(formula_vol_int_2,
   summary(.)
 
 ## Panel regression with bank and quarter fixed effects and double clustering ##
+
+# No lags---benchmark panel
+vol_int_panel_0 <- func_panel_est(formula = formula_vol_int_0, 
+                                  panel_data = panel_data_vol)
+
 vol_int_panel <- func_panel_est(formula = formula_vol_int_2, 
                                 panel_data = panel_data_vol)
 
