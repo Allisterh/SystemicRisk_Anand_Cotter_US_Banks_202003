@@ -233,7 +233,7 @@ plot_vol_int <- plot_vol_int +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   annotate('rect', alpha = 0.1,
            xmin = c(60, 70), xmax = c(66, 78),
-           ymin = c(0,0), ymax = c(100, 100))
+           ymin = c(0,0), ymax = c(80,80))
 
 ### Panel regression table of vol ~ int lags ###
 table_vol_int_ols <- knitr::kable(vol_int_ols$coefficients, 'latex')
@@ -271,10 +271,10 @@ plot_med_beta_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   labs(y = 'Integration', x = '') +
   theme(text = element_text(size = 18)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
-  annotate('rect', alpha = 0.1,
+  annotate('rect', alpha = 0.05,
            xmin = c(60, 70), xmax = c(66, 78),
            ymin = c(0,0), ymax = c(100, 100)) +
-  annotate('rect', alpha = 0.1,
+  annotate('rect', alpha = 0.05,
            xmin = c(60, 70), xmax = c(66, 78),
            ymin = c(0,0), ymax = c(100, 100))
   
@@ -292,7 +292,7 @@ plot_med_ivol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   annotate('rect', alpha = 0.1,
            xmin = c(60, 70), xmax = c(66, 78),
-           ymin = c(0,0), ymax = c(100, 100))
+           ymin = c(0,0), ymax = c(80, 80))
 
 plot_med_tvol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   geom_point(aes(y = med_int)) +
@@ -307,7 +307,7 @@ plot_med_tvol_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   annotate('rect', alpha = 0.1,
            xmin = c(60, 70), xmax = c(66, 78),
-           ymin = c(0,0), ymax = c(100, 100))
+           ymin = c(0,0), ymax = c(80, 80))
 
 
 plot_med_capmrsqr_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
@@ -323,26 +323,32 @@ plot_med_capmrsqr_int <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   annotate('rect', alpha = 0.1,
            xmin = c(60, 70), xmax = c(66, 78),
-           ymin = c(0,0), ymax = c(100, 100))
+           #ymin = c(0,0), ymax = c(100, 100))
+           ymin = c(0,0), ymax = c(80, 80))
 
-plot_grid_int_rsqr_beta <- cowplot::plot_grid(plot_med_capmrsqr_int + theme(axis.text.x = element_blank(),
-                                                                            axis.ticks.x = element_blank()), 
+plot_grid_int_rsqr_beta <- cowplot::plot_grid(plot_med_capmrsqr_int + 
+                                                theme(axis.text.x = element_blank(),
+                                                      axis.ticks.x = element_blank()), 
                                               plot_med_beta_int, 
                                               labels = c('(A)','(B)'), 
                                               label_size = 12, nrow = 2)
-plot_grid_int_vol_capm <- cowplot::plot_grid(plot_vol_int + theme(axis.text.x = element_blank(),
-                                                                       axis.ticks.x = element_blank()),
+plot_grid_int_vol_capm <- cowplot::plot_grid(plot_vol_int + 
+                                               theme(axis.text.x = element_blank(),
+                                                     axis.ticks.x = element_blank()),
                                              plot_med_ivol_int + theme(axis.text.x = element_blank(),
                                                                        axis.ticks.x = element_blank()), 
                                              plot_med_tvol_int,
                                              labels = c('(A)','(B)','(C)'), 
                                              label_size = 12, nrow = 3)
 #plot_grid(plot_grid_int_vol_capm, plot_grid_int_rsqr_beta, nrow = 2, ncol = 1)
-plot_grid_int_tvol_ivol <- cowplot::plot_grid(plot_med_ivol_int + theme(axis.text.x = element_blank(), axis.ticks.x = element_blank()), 
+plot_grid_int_tvol_ivol <- cowplot::plot_grid(plot_med_ivol_int + 
+                                                theme(axis.text.x = element_blank(), 
+                                                      axis.ticks.x = element_blank()), 
                                               plot_med_tvol_int, 
                                               labels = c('(A)','(B)'), 
                                               label_size = 12, nrow = 2)
 
+# One composite plot of integration with all vols
 plot_int_ivol_tvol <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   geom_point(aes(y = med_int)) +
   geom_line(aes(y = med_int), linetype = 'solid') +
@@ -358,4 +364,4 @@ plot_int_ivol_tvol <- ggplot(plot_data_beta_vol_int, aes(x = Q_num)) +
   theme(axis.text.x = element_text(angle = 60, hjust = 1)) +
   annotate('rect', alpha = 0.1,
            xmin = c(60, 70), xmax = c(66, 78),
-           ymin = c(0,0), ymax = c(100, 100))
+           ymin = c(0,0), ymax = c(80, 80))

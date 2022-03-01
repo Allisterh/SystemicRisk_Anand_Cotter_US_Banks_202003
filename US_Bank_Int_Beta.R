@@ -326,6 +326,6 @@ comp <- compare_distributions(m_pl, m_ln)
 
 # Bootstrapping
 # Each line takes ~20 minutes each
-bs_ln <- bootstrap(m_ln, xmins = seq(0,10,0.05), threads = 4, no_of_sims = 50)
-bs_p_ln <- bootstrap_p(m_ln, xmins = seq(0,10,0.05), threads = 4, no_of_sims = 50)
+#bs_ln <- bootstrap(m_ln, xmins = seq(0,10,0.05), threads = 4, no_of_sims = 50)
+#bs_p_ln <- bootstrap_p(m_ln, xmins = seq(0,10,0.05), threads = 4, no_of_sims = 50)
 
