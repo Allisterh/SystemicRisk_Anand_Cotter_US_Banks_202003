@@ -147,7 +147,7 @@ ivol_int_panel_L_VIX <- func_panel_est(formula_ivol_int,
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
 
 ############################################################################
-############# Integrating total volatility on integration lags #############
+############## Regressing total volatility on integration lags #############
 ############################################################################
 
 # Benchmark result: no intergation
@@ -254,16 +254,16 @@ beta_int_eq_panel_post_DF <- func_panel_est(formula_beta_int_eq, dplyr::filter(p
 beta_int_eq_panel_crises <- func_panel_est(formula_beta_int_eq, dplyr::filter(panel_data_beta,
                                                                         Crises == 1))
 # Beta: Bull TED
-beta_int_panel_H_TED <- func_panel_est(formula_beta_int, 
+beta_int_eq_panel_H_TED <- func_panel_est(formula_beta_int_eq, 
                                        dplyr::filter(panel_data_beta, bull_bear_TED == 'H'))
 # Beta: Bear TED
-beta_int_panel_L_TED <- func_panel_est(formula_beta_int, 
+beta_int_eq_panel_L_TED <- func_panel_est(formula_beta_int_eq, 
                                        dplyr::filter(panel_data_beta, bull_bear_TED == 'L'))
 # Beta: Bull VIX
-beta_int_panel_H_VIX <- func_panel_est(formula_beta_int, 
+beta_int_eq_panel_H_VIX <- func_panel_est(formula_beta_int_eq, 
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'H'))
 # Beta: Bear VIX
-beta_int_panel_L_VIX <- func_panel_est(formula_beta_int, 
+beta_int_eq_panel_L_VIX <- func_panel_est(formula_beta_int_eq, 
                                        dplyr::filter(panel_data_beta, bull_bear_VIX == 'L'))
 
 
