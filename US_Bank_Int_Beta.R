@@ -272,49 +272,49 @@ beta_int_eq_panel_L_VIX <- func_panel_est(formula_beta_int_eq,
 ############################################################################
 
 ### Collecting aggregate integration data
-integration_agg <- unique(panel_data_beta$int_lag0)
-integration_agg <- integration_agg[!is.na(integration_agg)]
-integration_agg <- integration_agg[integration_agg > 0]
-
-options(scipen=999)
-m_pl <- conpl$new(integration_agg)
-est <- estimate_xmin(m_pl, xmins = seq(0,10,0.05))
-m_pl$setXmin(est)
-plot(m_pl)
-lines(m_pl, col = 2, lwd = 2)
-
-m_par <- estimate_pars(m_pl)
-m_pl$setPars(m_par)
-#lines(m_pl, col = 2, lwd = 2, xlabel = 'CDF')
-#plot(m_pl)
-
-
-#bootstrapping
-bs <- bootstrap(m_pl, xmins = seq(0,10,0.05), threads = 4)
-plot(bs, trim = 0.1)
-hist(bs$bootstraps[ ,2])
-hist(bs$bootstraps[ ,3])
-
-#testing powr law hypothesis
-bs_p <- bootstrap_p(m_pl, xmins = seq(0,10,0.05), threads = 4) # p value 0, reject
-
-###
-
-# Fitting lognormal
-m_ln <- conlnorm$new(integration_agg)
-#est_ln <- estimate_xmin(m_ln) #this step takes time
-xmin_ln <- m_pl$getXmin()
-m_ln$setXmin(xmin_ln) #same xmin as power law for Vuong test
-pars_ln <- estimate_pars(m_ln)
-m_ln$setPars(pars_ln)
-
-# Comparing power and lognormal laws visually
-plot(m_ln, ylab = 'CDF')
-lines(m_pl, lty = 2, lwd = 2, col = 'blue')
-lines(m_ln, col = 'red', lwd = 2)
-
-# Comparing distributions formally
-comp <- compare_distributions(m_pl, m_ln)
+# integration_agg <- unique(panel_data_beta$int_lag0)
+# integration_agg <- integration_agg[!is.na(integration_agg)]
+# integration_agg <- integration_agg[integration_agg > 0]
+# 
+# options(scipen=999)
+# m_pl <- conpl$new(integration_agg)
+# est <- estimate_xmin(m_pl, xmins = seq(0,10,0.05))
+# m_pl$setXmin(est)
+# plot(m_pl)
+# lines(m_pl, col = 2, lwd = 2)
+# 
+# m_par <- estimate_pars(m_pl)
+# m_pl$setPars(m_par)
+# #lines(m_pl, col = 2, lwd = 2, xlabel = 'CDF')
+# #plot(m_pl)
+# 
+# 
+# #bootstrapping
+# bs <- bootstrap(m_pl, xmins = seq(0,10,0.05), threads = 4)
+# plot(bs, trim = 0.1)
+# hist(bs$bootstraps[ ,2])
+# hist(bs$bootstraps[ ,3])
+# 
+# #testing powr law hypothesis
+# bs_p <- bootstrap_p(m_pl, xmins = seq(0,10,0.05), threads = 4) # p value 0, reject
+# 
+# ###
+# 
+# # Fitting lognormal
+# m_ln <- conlnorm$new(integration_agg)
+# #est_ln <- estimate_xmin(m_ln) #this step takes time
+# xmin_ln <- m_pl$getXmin()
+# m_ln$setXmin(xmin_ln) #same xmin as power law for Vuong test
+# pars_ln <- estimate_pars(m_ln)
+# m_ln$setPars(pars_ln)
+# 
+# # Comparing power and lognormal laws visually
+# plot(m_ln, ylab = 'CDF')
+# lines(m_pl, lty = 2, lwd = 2, col = 'blue')
+# lines(m_ln, col = 'red', lwd = 2)
+# 
+# # Comparing distributions formally
+# comp <- compare_distributions(m_pl, m_ln)
 
 # Comparing distributions
 #plot(m_ln, ylab = 'CDF')
